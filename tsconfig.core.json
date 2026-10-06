@@ -1,0 +1,11 @@
+{
+  // src/core must run in workers, tests and a future Node CLI, so it is checked
+  // without DOM or Node types: a stray `document` or `window` fails to compile here.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.core.tsbuildinfo",
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["src/core", "tests"]
+}

@@ -1,0 +1,9 @@
+dist
+coverage
+package-lock.json
+
+# The prototype is kept verbatim as the behavioral reference.
+reference
+
+# Docs are written by hand; Prettier would rewrite emphasis and tables.
+*.md

@@ -13,6 +13,8 @@ Owner's design philosophy: systems that withhold and reveal through use. Prefer 
 
 ## Stack (decided)
 - **Vite + React + TypeScript (strict)**. State: Zustand. Worker RPC: Comlink.
+- TypeScript stays on `~6.0` until typescript-eslint supports 7 (its peer range is `<6.1.0`).
+- **Fonts**: self-hosted through Fontsource, so a visit makes no third-party requests.
 - **Solver**: pure TypeScript in `src/core/`, run in a Web Worker. WebGPU compute version comes later (M6) behind the same interface.
 - **Stage renderer**: WebGL2 fragment shader that shades the height field (height uploaded as an R32F texture, lamp as a uniform). The prototype's per-pixel canvas loop is only a reference.
 - **3D preview**: three.js (flat-shaded mesh, directional lamp).
@@ -65,7 +67,7 @@ Rules:
 
 ## Working conventions
 - Owner works on **Windows with PowerShell**. Scripts in `package.json` must be cross-platform (no bash-only syntax; use `rimraf`, `cross-env` if needed).
-- Node 22 LTS. Package manager: npm.
+- Node 24 LTS (`.nvmrc`; CI uses the same). Package manager: npm.
 - Every change to `src/core` comes with tests. Solver changes must keep the gradient check passing (see [docs/SOLVER.md §8 Testing](docs/SOLVER.md#8-testing)).
 - Small, focused commits with clear messages. Commits are co-authored with Claude.
 - Before saying a milestone is done, run `npm run build`, `npm test`, and open the app.
