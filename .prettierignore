@@ -2,8 +2,10 @@ dist
 coverage
 package-lock.json
 
-# The prototype is kept verbatim as the behavioral reference.
+# The prototype is kept verbatim as the behavioral reference, and so is its solver loop
+# in the test oracle.
 reference
+tests/core/fixtures/prototype-solver.js
 
 # Docs are written by hand; Prettier would rewrite emphasis and tables.
 *.md
