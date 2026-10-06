@@ -1,0 +1,31 @@
+/* Visual identity (CLAUDE.md): a museum documentation sheet in a dark gallery.
+   Names follow reference/prototype.html so ports from it stay direct. */
+:root {
+  --ground: #16171b; /* basalt studio wall */
+  --panel: #1e2025; /* felt-covered bench */
+  --line: #33353c; /* hairline */
+  --plaster: #ebe5d9; /* the relief itself */
+  --ink: #e4dfd5; /* running text on dark */
+  --ink-dim: #9c988f; /* captions */
+  --lamp: #ffb75e; /* tungsten raking lamp */
+  --lamp-soft: rgb(255 183 94 / 0.16);
+  --lamp-beam: rgb(255 183 94 / 0.1);
+  --lamp-hot: #fff3df; /* centre of the lamp's glow */
+  --lamp-core: #fff6e8; /* the bulb */
+  --lamp-on-plaster: #ffe2b0; /* light a low lamp casts on plaster */
+  --plaster-shadow: #111217; /* plaster facing away from the lamp */
+  --void: #101114; /* behind the medallion */
+
+  --f-display: "Marcellus", "Trajan Pro", Georgia, serif;
+  --f-body: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --f-persian: "Vazirmatn", "Noto Naskh Arabic", Tahoma, sans-serif;
+
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+  --step-4: clamp(2.75rem, 7vw, 5.25rem);
+
+  color-scheme: dark;
+}

@@ -1,0 +1,140 @@
+.stage {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.stage__frame {
+  position: relative;
+  width: min(100%, 580px);
+  aspect-ratio: 1;
+}
+
+.stage__art {
+  position: absolute;
+  inset: 0;
+}
+
+/* The specimen: a disc set into the bench, 82% of the frame like the prototype. */
+.stage__medallion {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--void);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 30px 80px rgb(0 0 0 / 0.55);
+}
+
+.stage__medallion::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(var(--falloff-angle), transparent 10%, rgb(0 0 0 / 0.3));
+}
+
+.stage__relief {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.stage__light {
+  lighting-color: var(--lamp-on-plaster);
+}
+
+.stage__shadow {
+  flood-color: var(--plaster-shadow);
+}
+
+/* Goniometer ring */
+.stage__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.stage__circle {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 0.25;
+}
+
+.stage__tick {
+  stroke: var(--ink-dim);
+  stroke-width: 0.25;
+  opacity: 0.55;
+}
+
+/* The lamp */
+.stage__beam {
+  fill: var(--lamp-beam);
+}
+
+.stage__glow-hot {
+  stop-color: var(--lamp-hot);
+}
+
+.stage__glow-warm {
+  stop-color: var(--lamp);
+}
+
+.stage__glow-fade {
+  stop-color: var(--lamp);
+  stop-opacity: 0;
+}
+
+.stage__bulb {
+  fill: var(--lamp-core);
+}
+
+/* Solver status */
+.stage__badge {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.stage__badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.stage__badge[data-status="ready"]::before {
+  background: var(--lamp);
+  box-shadow: 0 0 6px var(--lamp);
+}
+
+.stage__caption {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
+}
+
+.stage__title {
+  font-family: var(--f-display);
+  font-size: 1.05rem;
+  color: var(--plaster);
+}

@@ -1,0 +1,58 @@
+.shell {
+  max-width: 1140px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 28px clamp(16px, 4vw, 40px) 24px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 48px;
+}
+
+.hero {
+  display: grid;
+  gap: clamp(28px, 4vw, 56px);
+  align-items: center;
+}
+
+@media (min-width: 880px) {
+  .hero {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+}
+
+.hero__copy {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+
+.hero h1 {
+  font-size: var(--step-4);
+  line-height: 0.98;
+}
+
+.lede {
+  font-size: 1.125rem;
+}
+
+.hero__note {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.foot a {
+  color: var(--ink-dim);
+}
+
+.foot a:hover {
+  color: var(--lamp);
+}
