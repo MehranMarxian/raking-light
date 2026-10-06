@@ -1,0 +1,782 @@
+<title>Raking Light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Vazirmatn:wght@900&display=swap">
+<style>
+/* Layout: a museum documentation sheet. The specimen sits in a goniometer ring; captions read like conservation plates. */
+:root {
+  --ground: #16171b;      /* basalt studio wall */
+  --panel: #1e2025;       /* felt-covered bench */
+  --line: #33353c;        /* hairline */
+  --plaster: #ebe5d9;     /* the relief itself */
+  --ink: #e4dfd5;         /* running text on dark */
+  --ink-dim: #9c988f;     /* captions */
+  --lamp: #ffb75e;        /* tungsten raking lamp */
+  --lamp-soft: rgba(255, 183, 94, 0.16);
+  --f-display: "Marcellus", "Trajan Pro", Georgia, serif;
+  --f-body: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+  --step-4: clamp(2.75rem, 7vw, 5.25rem);
+  color-scheme: dark;
+}
+html, body { background: var(--ground); color: var(--ink); }
+body { font-family: var(--f-body); font-size: var(--step-0); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.page { max-width: 1140px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); padding-block: 28px 72px; display: grid; gap: clamp(64px, 9vw, 112px); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; letter-spacing: 0.01em; }
+h1 { font-size: var(--step-4); line-height: 0.98; color: var(--plaster); }
+h2 { font-size: var(--step-2); line-height: 1.15; color: var(--plaster); }
+h3 { font-size: var(--step-1); line-height: 1.25; color: var(--plaster); }
+p { margin: 0; max-width: 64ch; }
+.eyebrow, .mono, .cap { font-family: var(--f-mono); font-size: var(--step--1); letter-spacing: 0.06em; color: var(--ink-dim); }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.14em; }
+.lede { font-size: 1.125rem; color: var(--ink); }
+.muted { color: var(--ink-dim); }
+a { color: var(--lamp); }
+:focus-visible { outline: 2px solid var(--lamp); outline-offset: 3px; }
+
+/* ---------- Hero ---------- */
+.hero { display: grid; gap: clamp(28px, 4vw, 56px); align-items: center; }
+@media (min-width: 880px) { .hero { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); } }
+.hero-copy { display: grid; gap: 22px; min-width: 0; }
+.controls { display: grid; gap: 14px; padding-top: 6px; border-top: 1px solid var(--line); }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn { font: 500 0.9rem/1 var(--f-body); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 10px 16px; cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+.btn:hover { border-color: var(--lamp); color: var(--plaster); }
+.btn[aria-pressed="true"] { background: var(--lamp-soft); border-color: var(--lamp); color: var(--plaster); }
+.btn.primary { background: var(--lamp); color: #1a1408; border-color: var(--lamp); }
+.btn.primary:hover { filter: brightness(1.06); color: #1a1408; }
+.btn:disabled { opacity: .45; cursor: default; }
+.slider { display: grid; grid-template-columns: auto minmax(0, 1fr) 3.4em; gap: 12px; align-items: center; }
+.slider label { font-size: 0.9rem; color: var(--ink-dim); }
+input[type=range] { width: 100%; accent-color: var(--lamp); }
+.readout { font-family: var(--f-mono); font-size: 0.9rem; color: var(--ink); font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.readout b { font-weight: 500; color: var(--lamp); }
+
+.stage-wrap { display: grid; justify-items: center; gap: 12px; min-width: 0; }
+.stage { position: relative; width: min(100%, 580px); aspect-ratio: 1; max-width: 100%; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.stage:active { cursor: grabbing; }
+.stage canvas.relief { position: absolute; inset: 9%; width: 82%; height: 82%; border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 30px 80px rgba(0,0,0,.55); background: #101114; }
+.stage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.stage .lamp-handle { pointer-events: auto; cursor: grab; }
+.ring { fill: none; stroke: var(--line); stroke-width: 0.25; }
+.tick { stroke: var(--ink-dim); stroke-width: 0.25; opacity: .55; }
+.tick.major { stroke: var(--lamp); opacity: .9; stroke-width: 0.45; }
+.tick-label { font-family: var(--f-mono); font-size: 2.6px; fill: var(--ink-dim); letter-spacing: .1px; }
+.tick-label.lampname { fill: var(--lamp); font-size: 3px; }
+.lamp-beam { fill: rgba(255, 183, 94, 0.10); }
+.solve-badge { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); font-family: var(--f-mono); font-size: 0.75rem; color: var(--ink-dim); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---------- Plates ---------- */
+.section-head { display: grid; gap: 10px; margin-bottom: 28px; }
+.plates { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 2.4vw, 28px); }
+@media (max-width: 720px) { .plates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.plate { display: grid; gap: 10px; margin: 0; }
+.plate canvas { width: 100%; aspect-ratio: 1; max-width: 100%; border-radius: 50%; display: block; box-shadow: 0 0 0 1px var(--line); background: #101114; }
+.plate figcaption { display: grid; gap: 2px; }
+.plate .t { font-family: var(--f-display); font-size: 1.05rem; color: var(--plaster); }
+
+/* ---------- Method ---------- */
+.method { display: grid; gap: clamp(24px, 3vw, 40px); }
+@media (min-width: 900px) { .method { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.step { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.step .fig { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; min-height: 200px; display: grid; align-items: center; }
+.targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.targets figure { margin: 0; display: grid; gap: 6px; text-align: center; }
+.targets canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; background: #000; }
+#lossChart { width: 100%; height: auto; display: block; }
+#lossChart .axis { stroke: var(--line); stroke-width: 1; }
+#lossChart .grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 4; }
+#lossChart text { font-family: var(--f-mono); font-size: 10px; fill: var(--ink-dim); }
+#lossChart .curve { fill: none; stroke: var(--lamp); stroke-width: 1.6; }
+#lossChart .area { fill: var(--lamp-soft); }
+#lossChart .dot { fill: var(--lamp); }
+.hmap { width: 100%; aspect-ratio: 1; max-width: 100%; display: block; border-radius: 3px; }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 0; font-size: 0.93rem; }
+.facts dt { font-family: var(--f-mono); font-size: var(--step--1); color: var(--ink-dim); padding-top: 2px; }
+.facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* ---------- Object ---------- */
+.object { display: grid; gap: clamp(24px, 4vw, 56px); align-items: center; }
+@media (min-width: 880px) { .object { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); } }
+.viewport { position: relative; width: 100%; aspect-ratio: 4 / 3; max-width: 100%; background: radial-gradient(120% 90% at 50% 70%, #24262c 0%, var(--ground) 70%); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.viewport canvas { width: 100% !important; height: 100% !important; display: block; }
+.viewport .note { position: absolute; left: 14px; bottom: 12px; }
+.object-copy { display: grid; gap: 18px; min-width: 0; }
+.dmap-row { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; align-items: center; }
+.dmap-row canvas { width: 96px; height: 96px; border-radius: 3px; box-shadow: 0 0 0 1px var(--line); }
+
+/* ---------- Try ---------- */
+.try { display: grid; gap: 24px; }
+.slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 2vw, 24px); max-width: 720px; }
+.slot { display: grid; gap: 8px; }
+.slot .pick { position: relative; display: block; aspect-ratio: 1; max-width: 100%; border: 1px dashed var(--line); border-radius: 6px; overflow: hidden; cursor: pointer; background: #000; }
+.slot .pick:hover, .slot .pick:focus-within { border-color: var(--lamp); }
+.slot .pick canvas { width: 100%; height: 100%; display: block; image-rendering: auto; }
+.slot .pick span { position: absolute; inset: auto 0 0 0; padding: 6px 8px; font-family: var(--f-mono); font-size: 0.72rem; color: var(--plaster); background: linear-gradient(transparent, rgba(0,0,0,.75)); }
+.slot input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.status { font-family: var(--f-mono); font-size: 0.85rem; color: var(--ink-dim); min-height: 1.4em; }
+
+/* ---------- Roadmap ---------- */
+.features { display: grid; gap: 28px 48px; }
+@media (min-width: 760px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.off { opacity: .3; }
+.feature { display: grid; gap: 8px; padding-top: 16px; border-top: 1px solid var(--line); min-width: 0; }
+footer { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+</style>
+
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="title">
+    <div class="hero-copy">
+      <span class="eyebrow">App concept · generative relief</span>
+      <h1 id="title">Raking Light</h1>
+      <p class="lede">One relief surface holds several pictures. Under flat light it is an even, speckled plaster. Bring the lamp down low and move it around the edge, and each picture rises out of the shadows at its own angle.</p>
+      <p class="muted">The surface shown here was solved in your browser when this page opened. Drag around the ring to move the lamp.</p>
+      <div class="controls">
+        <div class="row" role="group" aria-label="Number of hidden pictures">
+          <span class="mono">Hidden pictures</span>
+          <button class="btn" id="mode2" aria-pressed="true">Two</button>
+          <button class="btn" id="mode3" aria-pressed="false">Three</button>
+        </div>
+        <div class="slider">
+          <label for="elev">Lamp height</label>
+          <input id="elev" type="range" min="4" max="90" step="1" value="18">
+          <span class="mono" id="elevOut">18°</span>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnSweep" aria-pressed="true">Sweep the lamp</button>
+          <button class="btn" id="btnFlat">Flat light</button>
+        </div>
+        <div class="row" id="picButtons">
+          <button class="btn" id="btnPic0">A · Crescent</button>
+          <button class="btn" id="btnPic1">B · Khatam star</button>
+          <button class="btn" id="btnPic2">C · نور</button>
+        </div>
+        <div class="readout" aria-live="polite">
+          <span>AZ <b id="azOut">270°</b></span>
+          <span>EL <b id="elOut">18°</b></span>
+          <span id="whichOut">Lamp A · Crescent</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-wrap">
+      <div class="stage" id="stage">
+        <canvas class="relief" id="relief" width="384" height="384" aria-label="Rendered relief surface lit by the virtual lamp"></canvas>
+        <svg viewBox="0 0 100 100" aria-hidden="false">
+          <defs>
+            <radialGradient id="glow">
+              <stop offset="0" stop-color="#fff3df"/>
+              <stop offset="0.35" stop-color="#ffb75e"/>
+              <stop offset="1" stop-color="#ffb75e" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle class="ring" cx="50" cy="50" r="45.5"/>
+          <g id="ticks"></g>
+          <g id="lampG">
+            <polygon class="lamp-beam" id="beamPoly" points=""/>
+            <circle cx="0" cy="0" r="4.2" fill="url(#glow)" id="lampGlow"/>
+            <circle cx="0" cy="0" r="1.3" fill="#fff6e8" id="lampCore"/>
+            <circle class="lamp-handle" id="lampHandle" cx="0" cy="0" r="4.5" fill="transparent" tabindex="0" role="slider" aria-label="Lamp direction" aria-valuemin="0" aria-valuemax="359" aria-valuenow="270" aria-valuetext="270 degrees"/>
+          </g>
+        </svg>
+        <div class="solve-badge" id="badge">Solving surface…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATES -->
+  <section aria-labelledby="platesH">
+    <div class="section-head">
+      <span class="eyebrow">Documentation plates</span>
+      <h2 id="platesH">One surface, four readings</h2>
+      <p class="muted">Conservators photograph inscriptions and paintings under raking light to reveal tool marks that flat light hides. This app turns that technique into a medium. All four plates below are the same height field; only the lamp moves.</p>
+    </div>
+    <div class="plates">
+      <figure class="plate"><canvas id="plate0" width="384" height="384"></canvas>
+        <figcaption><span class="t" id="pt0">Normal light</span><span class="cap" id="pc0">EL 90° · overhead</span></figcaption></figure>
+      <figure class="plate"><canvas id="plate1" width="384" height="384"></canvas>
+        <figcaption><span class="t" id="pt1"></span><span class="cap" id="pc1"></span></figcaption></figure>
+      <figure class="plate"><canvas id="plate2" width="384" height="384"></canvas>
+        <figcaption><span class="t" id="pt2"></span><span class="cap" id="pc2"></span></figcaption></figure>
+      <figure class="plate"><canvas id="plate3" width="384" height="384"></canvas>
+        <figcaption><span class="t" id="pt3"></span><span class="cap" id="pc3"></span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- METHOD -->
+  <section aria-labelledby="methodH">
+    <div class="section-head">
+      <span class="eyebrow">Under the hood</span>
+      <h2 id="methodH">How the surface is solved</h2>
+    </div>
+    <div class="method">
+      <div class="step">
+        <div class="fig">
+          <div class="targets">
+            <figure id="tf0"><canvas id="tg0" width="96" height="96"></canvas><span class="cap" id="tc0"></span></figure>
+            <figure id="tf1"><canvas id="tg1" width="96" height="96"></canvas><span class="cap" id="tc1"></span></figure>
+            <figure id="tf2"><canvas id="tg2" width="96" height="96"></canvas><span class="cap" id="tc2"></span></figure>
+          </div>
+        </div>
+        <h3>Pictures become cell targets</h3>
+        <p class="muted">Each picture is reduced to 96 × 96 cells and paired with a lamp direction. Every cell is backed by a 4 × 4 patch of heights, so the surface has 147,456 heights to tune and room for small facets that face different lamps.</p>
+      </div>
+      <div class="step">
+        <div class="fig">
+          <svg id="lossChart" viewBox="0 0 320 190" role="img" aria-label="Mismatch between rendered and target brightness falling over solver iterations"></svg>
+        </div>
+        <h3>Gradient descent on the light</h3>
+        <p class="muted">A renderer shades every facet with Lambert lighting, so facets turned away from a lamp fall dark. Brightness is averaged per cell, the way your eye averages it from a step back. Adam adjusts all heights together until each lamp's cells match its picture. A fourth term asks the overhead view to stay one even grey, which is why the plate reads as noise until the lamp drops.</p>
+      </div>
+      <div class="step">
+        <div class="fig"><canvas class="hmap" id="hmap" width="384" height="384"></canvas></div>
+        <h3>One height field out</h3>
+        <dl class="facts">
+          <dt>Grid</dt><dd>384 × 384 heights</dd>
+          <dt>Lamps</dt><dd id="factLamps"></dd>
+          <dt>Iterations</dt><dd id="factIters">300</dd>
+          <dt>Solve time</dt><dd id="factTime">running…</dd>
+          <dt>Trade-off</dt><dd>Two lamps set 90° apart act independently, so their pictures separate cleanly. A third lamp has to share facets with the other two: a cell that is bright for one lamp tends to go dark for the others, which leaves faint negative ghosts.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- OBJECT -->
+  <section class="object" aria-labelledby="objectH">
+    <div class="viewport" id="viewport">
+      <span class="note cap" id="viewNote">3D preview · lamp circling at 18°</span>
+    </div>
+    <div class="object-copy">
+      <span class="eyebrow">Off the screen</span>
+      <h2 id="objectH">A medallion you can hold under a lamp</h2>
+      <p class="muted">The solved field exports as a displacement map or a mesh. Printed in resin and cast in plaster, it behaves like the preview: a speckled disc on a lit wall, a picture when a single low light crosses it.</p>
+      <dl class="facts">
+        <dt>Diameter</dt><dd>120 mm</dd>
+        <dt>Facet pitch</dt><dd>0.31 mm</dd>
+        <dt>Relief depth</dt><dd id="factDepth">computing…</dd>
+        <dt>Mesh</dt><dd>≈ 231,000 triangles inside the disc</dd>
+        <dt>Exports</dt><dd>16-bit displacement PNG, STL with base, OBJ</dd>
+        <dt>Fabrication</dt><dd>MSLA resin at 50 µm, then a silicone mould and plaster cast</dd>
+      </dl>
+      <div class="dmap-row">
+        <canvas id="dmap" width="384" height="384" aria-label="Displacement map preview"></canvas>
+        <p class="cap">Displacement map. White is high, black is low. At this scale it looks like static.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRY -->
+  <section class="try" aria-labelledby="tryH">
+    <div class="section-head" style="margin-bottom:0">
+      <span class="eyebrow">Your pictures</span>
+      <h2 id="tryH">Hide your own images</h2>
+      <p class="muted">Pick a picture for any lamp, then solve. Strong shapes and high contrast survive best; portraits work when the face fills the frame. Nothing leaves your browser. In two-picture mode, lamps A and C are used.</p>
+    </div>
+    <div class="slots">
+      <div class="slot"><label class="pick"><canvas id="sl0" width="96" height="96"></canvas><span>Lamp A · replace</span><input type="file" id="file0" accept="image/*"></label></div>
+      <div class="slot"><label class="pick"><canvas id="sl1" width="96" height="96"></canvas><span>Lamp B · replace</span><input type="file" id="file1" accept="image/*"></label></div>
+      <div class="slot"><label class="pick"><canvas id="sl2" width="96" height="96"></canvas><span>Lamp C · replace</span><input type="file" id="file2" accept="image/*"></label></div>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="btnSolve">Solve the surface</button>
+      <button class="btn" id="btnReset">Restore the samples</button>
+      <span class="status" id="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section aria-labelledby="appH">
+    <div class="section-head">
+      <span class="eyebrow">The full app</span>
+      <h2 id="appH">What the app adds</h2>
+    </div>
+    <div class="features">
+      <div class="feature"><h3>Lamp layouts</h3><p class="muted">Two to four lamps at any direction and height. While you drag a lamp, a quick preview solve shows how much ghosting the layout will cost.</p></div>
+      <div class="feature"><h3>Sun mode</h3><p class="muted">Enter the wall's compass bearing and your city. Pictures are assigned to sun positions, so one appears in the morning and another only near sunset.</p></div>
+      <div class="feature"><h3>Print-ready export</h3><p class="muted">Sizes in millimetres, a base and a hanging slot, and a slope limit matched to the printer so thin facets don't break in casting.</p></div>
+      <div class="feature"><h3>Photographic targets</h3><p class="muted">Portrait mode reshapes contrast before solving, since faces need more midtones than graphic shapes do. Photogrammetry scans can also serve as the base form.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="cap">Raking Light · concept prototype · October 2026</span>
+    <span class="cap">Solver: Lambert shading, per-cell averaging, Adam, 300 steps</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+"use strict";
+const n = 96, C = 4, F = n * C, ITERS = 300, SOLVE_EL = 18;
+const PICS = [
+  { key: "A", name: "Crescent" },
+  { key: "B", name: "Khatam star" },
+  { key: "C", name: "نور, “light”" }
+];
+const LAYOUTS = {
+  2: [{ pic: 0, az: 270 }, { pic: 2, az: 0 }],
+  3: [{ pic: 0, az: 270 }, { pic: 1, az: 30 }, { pic: 2, az: 150 }]
+};
+let mode = 2;
+const lamps = () => LAYOUTS[mode].map(l => ({ ...l, key: PICS[l.pic].key, name: PICS[l.pic].name }));
+const pad3 = a => String(Math.round(a)).padStart(3, "0") + "°";
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = id => document.getElementById(id);
+const rad = d => d * Math.PI / 180;
+
+/* ---------------- Worker (solver) ---------------- */
+const workerSrc = `
+self.onmessage = (e) => {
+  const { targets, az, elev, n, C, iters, seed } = e.data;
+  const F = n * C, NN = F * F, cells = n * n;
+  const lo = 0.1, hi = 0.85, flatT = 0.6, wFlat = 4, lr = 0.05;
+  let st = seed >>> 0;
+  const rnd = () => { st |= 0; st = st + 0x6D2B79F5 | 0; let t = Math.imul(st ^ st >>> 15, 1 | st); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const h = new Float32Array(NN), m = new Float32Array(NN), v = new Float32Array(NN), g = new Float32Array(NN);
+  for (let i = 0; i < NN; i++) { const u1 = rnd() || 1e-9, u2 = rnd(); h[i] = 0.6 * Math.sqrt(-2 * Math.log(u1)) * Math.cos(6.2831853 * u2); }
+  const el = elev * Math.PI / 180;
+  const lights = az.map((a, k) => { const t = a * Math.PI / 180; const T = new Float32Array(cells); for (let c = 0; c < cells; c++) T[c] = lo + (hi - lo) * targets[k][c]; return { L: [Math.cos(el) * Math.cos(t), Math.cos(el) * Math.sin(t), Math.sin(el)], T, w: 1 }; });
+  const TF = new Float32Array(cells).fill(flatT);
+  lights.push({ L: [0, 0, 1], T: TF, w: wFlat });
+  const cm = new Float32Array(cells), r = new Float32Array(cells);
+  const b1 = 0.9, b2 = 0.999, inv = 1 / (C * C);
+  const t0 = performance.now();
+  for (let it = 1; it <= iters; it++) {
+    g.fill(0); let loss = 0;
+    for (const { L, T, w } of lights) {
+      const Lx = L[0], Ly = L[1], Lz = L[2];
+      cm.fill(0);
+      for (let y = 0; y < F; y++) {
+        const row = y * F, down = ((y + 1) % F) * F, cy = ((y / C) | 0) * n;
+        for (let x = 0; x < F; x++) {
+          const i = row + x, hi0 = h[i];
+          const hx = h[row + ((x + 1) % F)] - hi0, hy = h[down + x] - hi0;
+          const u = -Lx * hx - Ly * hy + Lz;
+          if (u > 0) cm[cy + ((x / C) | 0)] += u / Math.sqrt(1 + hx * hx + hy * hy);
+        }
+      }
+      for (let c = 0; c < cells; c++) { const d = cm[c] * inv - T[c]; r[c] = d; loss += w * d * d; }
+      const sc = 2 * w * inv / cells;
+      for (let y = 0; y < F; y++) {
+        const row = y * F, down = ((y + 1) % F) * F, cy = ((y / C) | 0) * n;
+        for (let x = 0; x < F; x++) {
+          const i = row + x, hi0 = h[i], right = row + ((x + 1) % F);
+          const hx = h[right] - hi0, hy = h[down + x] - hi0;
+          const u = -Lx * hx - Ly * hy + Lz;
+          if (u <= 0) continue;
+          const q2 = 1 + hx * hx + hy * hy, q = Math.sqrt(q2), q3 = q2 * q;
+          const d = r[cy + ((x / C) | 0)] * sc;
+          const dhx = d * (-Lx / q - u * hx / q3), dhy = d * (-Ly / q - u * hy / q3);
+          g[right] += dhx; g[down + x] += dhy; g[i] -= dhx + dhy;
+        }
+      }
+    }
+    loss /= cells;
+    const c1 = 1 - Math.pow(b1, it), c2 = 1 - Math.pow(b2, it);
+    for (let i = 0; i < NN; i++) {
+      const gi = g[i] + 1e-7 * h[i];
+      m[i] = b1 * m[i] + (1 - b1) * gi; v[i] = b2 * v[i] + (1 - b2) * gi * gi;
+      h[i] -= lr * (m[i] / c1) / (Math.sqrt(v[i] / c2) + 1e-12);
+    }
+    if (it % 5 === 0 || it === iters || it === 1) {
+      self.postMessage({ type: it === iters ? "done" : "progress", it, loss, ms: performance.now() - t0, h: h.slice(0) });
+    }
+  }
+};`;
+const workerURL = URL.createObjectURL(new Blob([workerSrc], { type: "text/javascript" }));
+let worker = null;
+
+/* ---------------- State ---------------- */
+let H = new Float32Array(F * F);
+let hasField = false;
+let az = 270, el = 18, sweeping = !reduceMotion, lastInteract = 0;
+const targets = [null, null, null];
+const sampleTargets = [null, null, null];
+const lossHist = [];
+
+/* ---------------- Targets ---------------- */
+function makeCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+function canvasToTarget(cv) {
+  const d = cv.getContext("2d").getImageData(0, 0, n, n).data, t = new Float32Array(n * n);
+  for (let i = 0; i < n * n; i++) t[i] = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) / 255;
+  return t;
+}
+function drawSample(k) {
+  const S = 4, cv = makeCanvas(n * S, n * S), g = cv.getContext("2d");
+  g.fillStyle = "#000"; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = "#fff";
+  const c = n * S / 2;
+  if (k === 0) {
+    g.beginPath(); g.arc(c - 18, c + 4, 118, 0, Math.PI * 2); g.fill();
+    g.globalCompositeOperation = "destination-out";
+    g.beginPath(); g.arc(c + 26, c - 30, 104, 0, Math.PI * 2); g.fill();
+    g.globalCompositeOperation = "source-over";
+    const star = (x, y, r) => { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.42 : r; g.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); } g.closePath(); g.fill(); };
+    star(c + 92, c - 62, 26); star(c + 120, c + 30, 17); star(c + 58, c + 108, 20); star(c - 4, c - 128, 13);
+  } else if (k === 1) {
+    const sq = (rot, r) => { g.beginPath(); for (let i = 0; i < 4; i++) { const a = rot + i * Math.PI / 2; g.lineTo(c + r * Math.cos(a), c + r * Math.sin(a)); } g.closePath(); g.fill(); };
+    sq(0, 150); sq(Math.PI / 4, 150);
+    g.fillStyle = "#000"; g.beginPath(); g.arc(c, c, 74, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#fff"; g.beginPath(); g.arc(c, c, 46, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#000"; g.beginPath(); g.arc(c, c, 18, 0, Math.PI * 2); g.fill();
+  } else {
+    g.font = '900 150px "Vazirmatn", "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif';
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.direction = "rtl";
+    g.fillText("نور", c, c + 6);
+  }
+  const out = makeCanvas(n, n), og = out.getContext("2d");
+  og.imageSmoothingQuality = "high"; og.drawImage(cv, 0, 0, n, n);
+  return out;
+}
+function paintThumb(canvas, t) {
+  const g = canvas.getContext("2d"), im = g.createImageData(n, n);
+  for (let i = 0; i < n * n; i++) { const v = t[i] * 255; im.data[i * 4] = v; im.data[i * 4 + 1] = v * 0.97; im.data[i * 4 + 2] = v * 0.92; im.data[i * 4 + 3] = 255; }
+  g.putImageData(im, 0, 0);
+}
+function paintAllThumbs() { for (let k = 0; k < 3; k++) { paintThumb($("tg" + k), targets[k]); paintThumb($("sl" + k), targets[k]); } }
+
+function imageToTarget(img) {
+  const cv = makeCanvas(n, n), g = cv.getContext("2d");
+  const s = Math.min(img.naturalWidth, img.naturalHeight);
+  g.imageSmoothingQuality = "high";
+  g.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, n, n);
+  const t = canvasToTarget(cv);
+  const sorted = Float32Array.from(t).sort(), lo = sorted[Math.floor(n * n * 0.02)], hi = sorted[Math.floor(n * n * 0.98)];
+  const span = Math.max(1e-3, hi - lo);
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const i = y * n + x, dx = x + 0.5 - n / 2, dy = y + 0.5 - n / 2, r = Math.sqrt(dx * dx + dy * dy) / (n / 2);
+    const fade = Math.min(1, Math.max(0, (0.98 - r) / 0.1));
+    t[i] = Math.min(1, Math.max(0, (t[i] - lo) / span)) * fade;
+  }
+  return t;
+}
+
+/* ---------------- Rendering ---------------- */
+const SHADOW = [17, 18, 23];
+function lampVec(azDeg, elDeg) { const a = rad(azDeg), e = rad(elDeg); return [Math.cos(e) * Math.cos(a), Math.cos(e) * Math.sin(a), Math.sin(e)]; }
+function renderTo(canvas, azDeg, elDeg, opts = {}) {
+  const g = canvas.getContext("2d");
+  if (!canvas._img) canvas._img = g.createImageData(F, F);
+  const im = canvas._img, d = im.data;
+  const [Lx, Ly, Lz] = lampVec(azDeg, elDeg);
+  // warmer, stronger lamp colour when low; neutral when overhead
+  const k = Math.min(1, Math.max(0, (60 - elDeg) / 50));
+  const lit = [236 + 19 * k, 229 - 3 * k, 216 - 40 * k];
+  const ca = Math.cos(rad(azDeg)), sa = Math.sin(rad(azDeg));
+  const fall = 0.14 * k, half = F / 2;
+  for (let y = 0; y < F; y++) {
+    const row = y * F, down = ((y + 1) % F) * F;
+    for (let x = 0; x < F; x++) {
+      const i = row + x, h0 = H[i];
+      const hx = H[row + ((x + 1) % F)] - h0, hy = H[down + x] - h0;
+      let s = (-Lx * hx - Ly * hy + Lz) / Math.sqrt(1 + hx * hx + hy * hy);
+      if (s < 0) s = 0;
+      const p = ((x - half) * ca + (y - half) * sa) / half;
+      s *= (1 - fall) + fall * p;
+      s = Math.min(1, s * 1.12);
+      const j = i * 4;
+      d[j] = SHADOW[0] + (lit[0] - SHADOW[0]) * s;
+      d[j + 1] = SHADOW[1] + (lit[1] - SHADOW[1]) * s;
+      d[j + 2] = SHADOW[2] + (lit[2] - SHADOW[2]) * s;
+      d[j + 3] = 255;
+    }
+  }
+  g.putImageData(im, 0, 0);
+}
+function renderHeight(canvas) {
+  const g = canvas.getContext("2d"), im = g.createImageData(F, F), d = im.data;
+  let mn = Infinity, mx = -Infinity;
+  for (let i = 0; i < H.length; i++) { if (H[i] < mn) mn = H[i]; if (H[i] > mx) mx = H[i]; }
+  const sp = mx - mn || 1;
+  for (let i = 0; i < H.length; i++) { const v = (H[i] - mn) / sp * 255; d[i * 4] = v; d[i * 4 + 1] = v; d[i * 4 + 2] = v; d[i * 4 + 3] = 255; }
+  g.putImageData(im, 0, 0);
+  return { mn, mx };
+}
+
+/* ---------------- Stage (lamp ring) ---------------- */
+const relief = $("relief"), stage = $("stage");
+const R = 45.5;
+function buildTicks() {
+  const G = $("ticks"); let s = ""; const LAMPS = lamps();
+  for (let a = 0; a < 360; a += 10) {
+    const major = LAMPS.some(l => l.az === a);
+    const r1 = R - (a % 30 === 0 ? 1.8 : 1), r2 = R + (major ? 2.2 : 0);
+    s += `<line class="tick${major ? " major" : ""}" x1="${50 + r1 * Math.cos(rad(a))}" y1="${50 + r1 * Math.sin(rad(a))}" x2="${50 + r2 * Math.cos(rad(a))}" y2="${50 + r2 * Math.sin(rad(a))}"/>`;
+  }
+  for (const l of LAMPS) {
+    const rr = R + 4.6;
+    s += `<text class="tick-label lampname" text-anchor="middle" dominant-baseline="central" x="${50 + rr * Math.cos(rad(l.az))}" y="${50 + rr * Math.sin(rad(l.az))}">${l.key}</text>`;
+  }
+  G.innerHTML = s;
+}
+buildTicks();
+function nearestLamp(a) {
+  let best = null, bd = 999;
+  for (const l of lamps()) { let d = Math.abs(((a - l.az + 540) % 360) - 180); if (d < bd) { bd = d; best = l; } }
+  return bd <= 14 ? best : null;
+}
+function updateLampUI() {
+  const x = 50 + R * Math.cos(rad(az)), y = 50 + R * Math.sin(rad(az));
+  for (const id of ["lampGlow", "lampCore", "lampHandle"]) { $(id).setAttribute("cx", x); $(id).setAttribute("cy", y); }
+  const spread = 20 * Math.max(0.2, 1 - el / 90);
+  const p = (ang, r) => `${50 + r * Math.cos(rad(ang))},${50 + r * Math.sin(rad(ang))}`;
+  $("beamPoly").setAttribute("points", `${p(az, R)} ${p(az + spread, R * 0.55)} ${p(az - spread, R * 0.55)}`);
+  $("beamPoly").style.opacity = el > 70 ? 0 : (1 - el / 70);
+  const azR = Math.round(((az % 360) + 360) % 360);
+  $("azOut").textContent = String(azR).padStart(3, "0") + "°";
+  $("elOut").textContent = Math.round(el) + "°";
+  $("elevOut").textContent = Math.round(el) + "°";
+  const near = el < 40 ? nearestLamp(az) : null;
+  $("whichOut").textContent = el >= 70 ? "Flat light · the surface reads as noise" : near ? `Lamp ${near.key} · ${near.name}` : el >= 40 ? "Lamp too high for clear pictures" : "Between lamps · pictures cross-fade";
+  const h = $("lampHandle"); h.setAttribute("aria-valuenow", azR); h.setAttribute("aria-valuetext", azR + " degrees");
+}
+let renderQueued = false;
+function requestRender() {
+  if (renderQueued) return; renderQueued = true;
+  requestAnimationFrame(() => { renderQueued = false; renderTo(relief, az, el); updateLampUI(); });
+}
+function setSweep(on) { sweeping = on; $("btnSweep").setAttribute("aria-pressed", on ? "true" : "false"); if (on) startSweep(); }
+function setLamp(a, e, stop = true) { if (stop) setSweep(false); az = ((a % 360) + 360) % 360; if (e != null) { el = e; $("elev").value = e; } requestRender(); }
+
+function angleFromEvent(ev) {
+  const r = stage.getBoundingClientRect();
+  return Math.atan2(ev.clientY - (r.top + r.height / 2), ev.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
+}
+let dragging = false;
+stage.addEventListener("pointerdown", ev => { dragging = true; stage.setPointerCapture(ev.pointerId); setLamp(angleFromEvent(ev)); });
+stage.addEventListener("pointermove", ev => { if (dragging) setLamp(angleFromEvent(ev)); });
+stage.addEventListener("pointerup", () => dragging = false);
+stage.addEventListener("pointercancel", () => dragging = false);
+$("lampHandle").addEventListener("keydown", ev => {
+  const step = ev.shiftKey ? 15 : 3;
+  if (ev.key === "ArrowRight" || ev.key === "ArrowUp") { setLamp(az + step); ev.preventDefault(); }
+  if (ev.key === "ArrowLeft" || ev.key === "ArrowDown") { setLamp(az - step); ev.preventDefault(); }
+});
+$("elev").addEventListener("input", e => { el = +e.target.value; requestRender(); });
+$("btnFlat").addEventListener("click", () => setLamp(az, 90));
+for (let k = 0; k < 3; k++) $("btnPic" + k).addEventListener("click", () => { const l = lamps().find(l => l.pic === k); if (l) setLamp(l.az, SOLVE_EL); });
+function setMode(m) {
+  if (m === mode) return;
+  mode = m;
+  $("mode2").setAttribute("aria-pressed", m === 2); $("mode3").setAttribute("aria-pressed", m === 3);
+  applyMode();
+  if (!reduceMotion) { setSweep(false); setSweep(true); } else setLamp(270, SOLVE_EL);
+  solve();
+}
+$("mode2").addEventListener("click", () => setMode(2));
+$("mode3").addEventListener("click", () => setMode(3));
+function applyMode() {
+  buildTicks();
+  const L = lamps(), used = new Set(L.map(l => l.pic));
+  $("btnPic1").hidden = !used.has(1);
+  for (let k = 0; k < 3; k++) {
+    const l = L.find(l => l.pic === k);
+    $("btnPic" + k).textContent = `${PICS[k].key} · ${k === 2 ? "نور" : PICS[k].name}`;
+    $("tf" + k).classList.toggle("off", !l);
+    $("tc" + k).textContent = l ? `${PICS[k].key} · ${pad3(l.az)}` : `${PICS[k].key} · not used`;
+    $("sl" + k).closest(".slot").classList.toggle("off", !l);
+  }
+  $("factLamps").textContent = `${L.length} at ${L.map(l => pad3(l.az)).join(", ")}, all ${SOLVE_EL}° high`;
+  // plates: overhead, each lamp, and (in two-lamp mode) the midpoint between lamps
+  const plates = [{ t: "Normal light", c: "EL 90° · overhead", az: 45, el: 90 }];
+  for (const l of L) plates.push({ t: `Lamp ${l.key} · ${l.name}`, c: `AZ ${pad3(l.az)} · EL ${SOLVE_EL}°`, az: l.az, el: SOLVE_EL });
+  if (plates.length < 4) plates.push({ t: "Between the lamps", c: `AZ 315° · EL ${SOLVE_EL}° · cross-fade`, az: 315, el: SOLVE_EL });
+  platesSpec = plates;
+  plates.forEach((p, i) => { $("pt" + i).textContent = p.t; $("pc" + i).textContent = p.c; });
+}
+let platesSpec = [];
+$("btnSweep").addEventListener("click", () => setSweep(!sweeping));
+
+// Sweep: dwell on each lamp, travel between them
+let sweepT0 = performance.now(), sweepRunning = false;
+const DWELL = 1600, MOVE = 1900, SEG = DWELL + MOVE;
+function sweepAngle(t) {
+  t = Math.max(0, t || 0);
+  const order = lamps().map(l => l.az), N = order.length;
+  const seg = Math.floor(t / SEG) % N, u = t % SEG;
+  const a0 = order[seg], a1 = order[(seg + 1) % N];
+  let delta = ((a1 - a0 + 540) % 360) - 180; if (delta < 0) delta += 360; // always clockwise
+  if (u < DWELL) return a0;
+  const v = (u - DWELL) / MOVE, e = v < 0.5 ? 2 * v * v : 1 - Math.pow(-2 * v + 2, 2) / 2;
+  return a0 + delta * e;
+}
+function startSweep() {
+  if (sweepRunning) return; sweepRunning = true;
+  const start = performance.now();
+  // continue from current angle's nearest lamp
+  const L = lamps(), idx = Math.max(0, L.findIndex(l => l.az === (nearestLamp(az) || L[0]).az));
+  sweepT0 = start - idx * SEG;
+  if (el > 40) { el = SOLVE_EL; $("elev").value = SOLVE_EL; }
+  const tick = now => {
+    if (!sweeping) { sweepRunning = false; return; }
+    az = sweepAngle(now - sweepT0);
+    renderTo(relief, az, el); updateLampUI();
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/* ---------------- Loss chart ---------------- */
+function drawLoss() {
+  const svg = $("lossChart");
+  const W = 320, Hh = 190, l = 44, r = 12, t = 14, b = 34;
+  const pw = W - l - r, ph = Hh - t - b;
+  if (!lossHist.length) { svg.innerHTML = ""; return; }
+  const ymax = Math.max(...lossHist.map(p => p[1])) * 1.05;
+  const X = i => l + (i / ITERS) * pw, Y = v => t + ph - (v / ymax) * ph;
+  const pts = lossHist.map(([i, v]) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+  const last = lossHist[lossHist.length - 1];
+  const fmt = v => v.toFixed(3);
+  let s = "";
+  for (const f of [0, 0.5, 1]) { const v = ymax / 1.05 * f; s += `<line class="grid" x1="${l}" x2="${W - r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${l - 6}" y="${Y(v) + 3}" text-anchor="end">${fmt(v)}</text>`; }
+  for (const i of [0, 100, 200, 300]) s += `<text x="${X(i)}" y="${Hh - b + 15}" text-anchor="middle">${i}</text>`;
+  s += `<line class="axis" x1="${l}" x2="${W - r}" y1="${t + ph}" y2="${t + ph}"/>`;
+  s += `<polygon class="area" points="${X(lossHist[0][0])},${t + ph} ${pts} ${X(last[0])},${t + ph}"/>`;
+  s += `<polyline class="curve" points="${pts}"/>`;
+  s += `<circle class="dot" cx="${X(last[0])}" cy="${Y(last[1])}" r="3"/>`;
+  s += `<text x="${l + pw / 2}" y="${Hh - 4}" text-anchor="middle">iteration</text>`;
+  s += `<text x="${Math.min(X(last[0]) + 6, W - r - 40)}" y="${Y(last[1]) - 8}" style="fill:var(--lamp)">${fmt(last[1])}</text>`;
+  svg.innerHTML = s;
+}
+
+/* ---------------- Plates, maps, facts ---------------- */
+function refreshStatic(final) {
+  platesSpec.forEach((p, i) => renderTo($("plate" + i), p.az, p.el));
+  const { mn, mx } = renderHeight($("hmap"));
+  $("dmap").getContext("2d").drawImage($("hmap"), 0, 0);
+  if (final) {
+    // only count the disc
+    let a = Infinity, b = -Infinity;
+    for (let y = 0; y < F; y++) for (let x = 0; x < F; x++) {
+      const dx = x + 0.5 - F / 2, dy = y + 0.5 - F / 2; if (dx * dx + dy * dy > (F / 2) * (F / 2)) continue;
+      const v = H[y * F + x]; if (v < a) a = v; if (v > b) b = v;
+    }
+    $("factDepth").textContent = ((b - a) * 120 / F).toFixed(1) + " mm, peak to valley";
+  }
+}
+
+/* ---------------- Solve ---------------- */
+let solving = false;
+function solve() {
+  if (worker) worker.terminate();
+  worker = new Worker(workerURL);
+  solving = true; lossHist.length = 0;
+  $("btnSolve").disabled = true; $("badge").hidden = false; $("badge").textContent = "Solving surface · step 0 / " + ITERS;
+  $("status").textContent = "Solving…"; $("factTime").textContent = "running…";
+  let lastStatic = 0;
+  worker.onmessage = e => {
+    const { it, loss, ms, h, type } = e.data;
+    H = h; hasField = true; lossHist.push([it, loss]);
+    $("badge").textContent = `Solving surface · step ${it} / ${ITERS}`;
+    if (!sweeping) requestRender();
+    drawLoss();
+    if (it - lastStatic >= 25 || type === "done") { lastStatic = it; refreshStatic(type === "done"); }
+    if (type === "done") {
+      solving = false; $("btnSolve").disabled = false; $("badge").hidden = true;
+      $("factTime").textContent = (ms / 1000).toFixed(1) + " s in this browser";
+      $("status").textContent = `Solved in ${(ms / 1000).toFixed(1)} s. Move the lamp at the top of the page.`;
+      updateThree();
+    } else if (it % 25 === 0) updateThree();
+  };
+  worker.postMessage({ targets: lamps().map(l => Array.from(targets[l.pic])), az: lamps().map(l => l.az), elev: SOLVE_EL, n, C, iters: ITERS, seed: 7 });
+}
+$("btnSolve").addEventListener("click", () => { solve(); if (!reduceMotion) setSweep(true); window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" }); });
+$("btnReset").addEventListener("click", () => { for (let k = 0; k < 3; k++) targets[k] = sampleTargets[k]; paintAllThumbs(); $("status").textContent = "Sample pictures restored. Solve to rebuild the surface."; });
+for (let k = 0; k < 3; k++) {
+  $("file" + k).addEventListener("change", ev => {
+    const f = ev.target.files && ev.target.files[0]; if (!f) return;
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => { targets[k] = imageToTarget(img); URL.revokeObjectURL(url); paintAllThumbs(); $("status").textContent = `Lamp ${PICS[k].key} picture replaced. Solve to rebuild the surface.`; };
+    img.onerror = () => { $("status").textContent = "That file couldn't be read as an image. Try a JPEG or PNG."; };
+    img.src = url; ev.target.value = "";
+  });
+}
+
+/* ---------------- 3D medallion ---------------- */
+let three = null;
+function initThree() {
+  if (!window.THREE) { $("viewNote").textContent = "3D preview unavailable in this browser"; return; }
+  const vp = $("viewport");
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { $("viewNote").textContent = "3D preview needs WebGL"; return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  vp.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(30, 4 / 3, 0.01, 20);
+  camera.up.set(0, 0, 1); camera.position.set(0, -1.62, 1.28); camera.lookAt(0, 0.04, -0.03);
+  const pos = new Float32Array(F * F * 3);
+  for (let r = 0; r < F; r++) for (let c = 0; c < F; c++) { const i = (r * F + c) * 3; pos[i] = (c + 0.5) / F - 0.5; pos[i + 1] = 0.5 - (r + 0.5) / F; pos[i + 2] = 0; }
+  const idx = [], lim = (0.5 - 1.2 / F) ** 2;
+  for (let r = 0; r < F - 1; r++) for (let c = 0; c < F - 1; c++) {
+    const cx = (c + 1) / F - 0.5, cy = 0.5 - (r + 1) / F; if (cx * cx + cy * cy > lim) continue;
+    const a = r * F + c, b = a + 1, cc = a + F, d = cc + 1; idx.push(a, cc, b, cc, d, b);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setIndex(idx);
+  const mat = new THREE.MeshStandardMaterial({ color: 0xe9e2d4, roughness: 0.92, metalness: 0, flatShading: true });
+  const mesh = new THREE.Mesh(geo, mat); scene.add(mesh);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 160), new THREE.MeshStandardMaterial({ color: 0xd8d0c0, roughness: 0.95 }));
+  base.rotation.x = Math.PI / 2; base.position.z = -0.026; scene.add(base);
+  const lamp = new THREE.DirectionalLight(0xffd6a0, 2.1); scene.add(lamp); scene.add(lamp.target);
+  const fill = new THREE.AmbientLight(0x8a96aa, 0.07); scene.add(fill);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffe2b8 })); scene.add(bulb);
+  three = { renderer, scene, camera, mesh, geo, pos, lamp, bulb, visible: false, t0: performance.now() };
+  const resize = () => { const w = vp.clientWidth, h = vp.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); drawThree(performance.now()); };
+  new ResizeObserver(resize).observe(vp); resize();
+  new IntersectionObserver(es => { three.visible = es[0].isIntersecting; if (three.visible && !reduceMotion) loopThree(); }, { threshold: 0.05 }).observe(vp);
+  updateThree();
+}
+function updateThree() {
+  if (!three || !hasField) return;
+  const p = three.pos, zs = 1 / F;
+  let mean = 0; for (let i = 0; i < H.length; i++) mean += H[i]; mean /= H.length;
+  for (let i = 0; i < H.length; i++) p[i * 3 + 2] = (H[i] - mean) * zs;
+  three.geo.attributes.position.needsUpdate = true;
+  three.geo.computeBoundingSphere();
+  drawThree(performance.now());
+}
+function drawThree(now) {
+  if (!three) return;
+  const t = reduceMotion ? 0 : (now - three.t0);
+  const a = reduceMotion ? 270 : sweepAngle(t * 0.9);
+  const e = rad(SOLVE_EL), th = rad(a);
+  const L = new THREE.Vector3(Math.cos(e) * Math.cos(th), -Math.cos(e) * Math.sin(th), Math.sin(e));
+  three.lamp.position.copy(L); three.lamp.target.position.set(0, 0, 0);
+  three.bulb.position.copy(L.clone().multiplyScalar(0.72));
+  three.renderer.render(three.scene, three.camera);
+}
+let threeLoop = false;
+function loopThree() {
+  if (threeLoop) return; threeLoop = true;
+  const f = now => { if (!three.visible) { threeLoop = false; return; } drawThree(now); requestAnimationFrame(f); };
+  requestAnimationFrame(f);
+}
+
+/* ---------------- Boot ---------------- */
+async function boot() {
+  try { await Promise.race([document.fonts.load('900 150px "Vazirmatn"', "نور"), new Promise(r => setTimeout(r, 2500))]); } catch (e) {}
+  for (let k = 0; k < 3; k++) { sampleTargets[k] = canvasToTarget(drawSample(k)); targets[k] = sampleTargets[k]; }
+  paintAllThumbs();
+  applyMode();
+  // first frame: random initial surface so the stage is never empty
+  H = new Float32Array(F * F).map(() => (Math.random() - 0.5) * 1.6); hasField = true;
+  refreshStatic(false); renderTo(relief, az, el); updateLampUI();
+  initThree();
+  solve();
+  if (sweeping) startSweep();
+}
+boot();
+})();
+</script>
