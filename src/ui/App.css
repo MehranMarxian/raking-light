@@ -24,10 +24,12 @@
   display: grid;
   gap: 22px;
   min-width: 0;
+  container-type: inline-size;
 }
 
+/* "Raking Light" in Marcellus is 5.64 em wide, so 17% of the column keeps it on one line. */
 .hero h1 {
-  font-size: var(--step-4);
+  font-size: clamp(2.75rem, 17cqi, 5.25rem);
   line-height: 0.98;
 }
 

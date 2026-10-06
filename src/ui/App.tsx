@@ -1,34 +1,9 @@
-import { useEffect } from "react";
-import { useAppStore } from "../state/store";
-import { connectSolver } from "../workers/solverClient";
 import { Stage } from "./Stage";
+import { useSampleSolve } from "./useSampleSolve";
 import "./App.css";
 
 export function App() {
-  const setSolver = useAppStore((s) => s.setSolver);
-
-  useEffect(() => {
-    let connection;
-    try {
-      connection = connectSolver();
-    } catch {
-      setSolver("unavailable");
-      return;
-    }
-    let live = true;
-    connection.ready.then(
-      () => {
-        if (live) setSolver("ready");
-      },
-      () => {
-        if (live) setSolver("unavailable");
-      },
-    );
-    return () => {
-      live = false;
-      connection.dispose();
-    };
-  }, [setSolver]);
+  useSampleSolve();
 
   return (
     <div className="shell">
@@ -42,8 +17,8 @@ export function App() {
             of the shadows at its own angle.
           </p>
           <p className="muted hero__note">
-            Work in progress. The stage is set and the lamp is lit; the solver that hides pictures
-            in the plaster comes next.
+            Work in progress. This surface was solved in your browser when the page opened. Switch
+            lamps to see each picture; dragging the lamp around the ring comes next.
           </p>
         </div>
         <Stage />

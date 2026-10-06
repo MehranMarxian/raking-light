@@ -37,11 +37,15 @@ export default defineConfig([
   // src/core stays framework-free and DOM-free (CLAUDE.md, Architecture).
   // tsconfig.core.json catches DOM globals; this catches imports.
   {
+    // Numeric loops index typed arrays in range by construction, but noUncheckedIndexedAccess
+    // still types every read as possibly undefined.
+    files: ["src/core/**/*.ts", "src/render/**/*.ts", "tests/core/**/*.ts"],
+    rules: { "@typescript-eslint/no-non-null-assertion": "off" },
+  },
+
+  {
     files: ["src/core/**/*.ts", "tests/core/**/*.ts"],
     rules: {
-      // Numeric loops index typed arrays in range by construction, but noUncheckedIndexedAccess
-      // still types every read as possibly undefined.
-      "@typescript-eslint/no-non-null-assertion": "off",
       "no-restricted-imports": [
         "error",
         {

@@ -29,25 +29,10 @@
     0 30px 80px rgb(0 0 0 / 0.55);
 }
 
-.stage__medallion::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(var(--falloff-angle), transparent 10%, rgb(0 0 0 / 0.3));
-}
-
 .stage__relief {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.stage__light {
-  lighting-color: var(--lamp-on-plaster);
-}
-
-.stage__shadow {
-  flood-color: var(--plaster-shadow);
 }
 
 /* Goniometer ring */
@@ -70,6 +55,18 @@
   stroke: var(--ink-dim);
   stroke-width: 0.25;
   opacity: 0.55;
+}
+
+.stage__tick--lamp {
+  stroke: var(--lamp);
+  stroke-width: 0.45;
+  opacity: 0.9;
+}
+
+.stage__lamp-key {
+  font-family: var(--f-mono);
+  font-size: 3px;
+  fill: var(--lamp);
 }
 
 /* The lamp */
@@ -106,6 +103,7 @@
   padding: 4px 12px;
   font-family: var(--f-mono);
   font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-dim);
   white-space: nowrap;
   background: var(--panel);
@@ -121,7 +119,11 @@
   background: var(--line);
 }
 
-.stage__badge[data-status="ready"]::before {
+.stage__badge[data-status="solving"]::before {
+  background: var(--lamp);
+}
+
+.stage__badge[data-status="done"]::before {
   background: var(--lamp);
   box-shadow: 0 0 6px var(--lamp);
 }
@@ -137,4 +139,11 @@
   font-family: var(--f-display);
   font-size: 1.05rem;
   color: var(--plaster);
+}
+
+.stage__lamps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 }

@@ -3,6 +3,8 @@ import { DEFAULTS } from "./defaults";
 export interface Picture {
   key: string;
   name: string;
+  /** Language of the name, when it is not English. */
+  lang?: string;
 }
 
 /** A lamp in a layout: where it stands and which picture it shows. */
@@ -18,7 +20,7 @@ export interface LampPlacement {
 export const SAMPLE_PICTURES: readonly Picture[] = [
   { key: "A", name: "Crescent" },
   { key: "B", name: "Khatam star" },
-  { key: "C", name: "نور" },
+  { key: "C", name: "نور", lang: "fa" },
 ];
 
 const el = DEFAULTS.solveElevation;

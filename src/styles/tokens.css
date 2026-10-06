@@ -12,8 +12,6 @@
   --lamp-beam: rgb(255 183 94 / 0.1);
   --lamp-hot: #fff3df; /* centre of the lamp's glow */
   --lamp-core: #fff6e8; /* the bulb */
-  --lamp-on-plaster: #ffe2b0; /* light a low lamp casts on plaster */
-  --plaster-shadow: #111217; /* plaster facing away from the lamp */
   --void: #101114; /* behind the medallion */
 
   --f-display: "Marcellus", "Trajan Pro", Georgia, serif;

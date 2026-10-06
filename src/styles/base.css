@@ -61,3 +61,47 @@ a {
 .muted {
   color: var(--ink-dim);
 }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Pill buttons, as in the prototype */
+.btn {
+  padding: 10px 16px;
+  font: 500 0.9rem/1 var(--f-body);
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+
+.btn:hover {
+  border-color: var(--lamp);
+  color: var(--plaster);
+}
+
+.btn[aria-pressed="true"] {
+  background: var(--lamp-soft);
+  border-color: var(--lamp);
+  color: var(--plaster);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+}
