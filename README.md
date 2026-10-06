@@ -4,7 +4,7 @@ Relief surfaces that hide pictures. Under flat light the surface reads as even, 
 
 **Status:** early scaffold (milestone M0). There is nothing to solve yet; see the [roadmap](docs/ROADMAP.md).
 
-**Live:** <https://mehranmarxian.github.io/raking-light/>
+**Live:** <https://mehran-ahmadi.com/raking-light/>
 
 ## Privacy
 

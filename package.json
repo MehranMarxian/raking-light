@@ -5,7 +5,7 @@
   "description": "Relief surfaces that hide pictures until a low raking lamp reveals them.",
   "license": "MIT",
   "author": "Mehran Ahmadi",
-  "homepage": "https://mehranmarxian.github.io/raking-light/",
+  "homepage": "https://mehran-ahmadi.com/raking-light/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MehranMarxian/raking-light.git"
