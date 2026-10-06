@@ -61,7 +61,7 @@ Rules:
 5. Strong shapes and text survive best. Photos need contrast shaping (levels to 2nd–98th percentile).
 
 ## Visual identity (from the prototype)
-- Dark "gallery" look: basalt ground `#16171b`, bench `#1e2025`, hairline `#33353c`, plaster `#ebe5d9`, caption grey `#9c988f`, tungsten lamp accent `#ffb75e`.
+- Dark "gallery" look: pitch-black ground `#000000` (owner's call; the prototype used basalt `#16171b`), bench `#1e2025`, hairline `#33353c`, plaster `#ebe5d9`, caption grey `#9c988f`, tungsten lamp accent `#ffb75e`.
 - Type: Marcellus (display, inscriptional), Hanken Grotesk (body), IBM Plex Mono (readouts, captions in museum-plate style: `AZ 270° · EL 18°`), Vazirmatn 900 for Persian text targets.
 - The stage is a round medallion inside a goniometer ring with degree ticks; the lamp is a glowing dot on the ring.
 

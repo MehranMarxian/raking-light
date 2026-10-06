@@ -1,7 +1,7 @@
 /* Visual identity (CLAUDE.md): a museum documentation sheet in a dark gallery.
    Names follow reference/prototype.html so ports from it stay direct. */
 :root {
-  --ground: #16171b; /* basalt studio wall */
+  --ground: #000000; /* pitch-black gallery wall (the prototype used basalt #16171b) */
   --panel: #1e2025; /* felt-covered bench */
   --line: #33353c; /* hairline */
   --plaster: #ebe5d9; /* the relief itself */
