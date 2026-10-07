@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { DEFAULTS } from "../core/defaults";
-import type { SAMPLE_LAYOUTS } from "../core/layouts";
+import type { SampleLayoutId } from "../core/layouts";
+import type { Project } from "../core/project";
+import type { LampReport } from "../core/report";
 
 export interface Lamp {
   /** Azimuth in degrees, image coordinates (y down): 0° = right, 270° = top. */
@@ -9,8 +11,12 @@ export interface Lamp {
   el: number;
 }
 
-/** Which sample layout is solved: two lamps 90° apart, or three 120° apart. */
-export type Mode = keyof typeof SAMPLE_LAYOUTS;
+/** A height field and its grid: n × n cells of C × C heights, so F = n · C per side. */
+export interface Field {
+  heights: Float32Array;
+  n: number;
+  C: number;
+}
 
 export type SolveStatus = "preparing" | "solving" | "done" | "unavailable";
 
@@ -23,6 +29,13 @@ export interface SolveState {
   ms: number | null;
 }
 
+/** The quick, half-resolution solve of the draft that the layout editor shows. */
+export interface PreviewState {
+  status: "idle" | "solving" | "done" | "unavailable";
+  field: Field | null;
+  report: LampReport[] | null;
+}
+
 /** (iteration, loss) */
 export type LossPoint = readonly [number, number];
 
@@ -30,24 +43,32 @@ export const prefersReducedMotion =
   typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 interface AppState {
-  mode: Mode;
+  /** What the stage shows and the full solve works on. Null until the samples are drawn. */
+  project: Project | null;
+  /** Which sample layout the project is, if it is one. */
+  presetId: SampleLayoutId | null;
+  /** What the layout editor is changing; becomes the project on "Solve the surface". */
+  draft: Project | null;
+  preview: PreviewState;
   lamp: Lamp;
   sweeping: boolean;
-  /** The surface on the stage, F × F: the starting field, then each solver snapshot. */
-  heights: Float32Array | null;
-  /** The sample pictures as n × n targets, once drawn. */
-  targets: readonly Float32Array[] | null;
+  /** The surface on the stage: the starting field, then each solver snapshot. */
+  field: Field | null;
   solve: SolveState;
   lossHistory: readonly LossPoint[];
 
-  setMode: (mode: Mode) => void;
+  /** Shows a new project (a preset or a loaded file) and solves it; the editor starts from it. */
+  setProject: (project: Project, presetId: SampleLayoutId | null) => void;
+  /** Solves what the editor holds. */
+  commitDraft: () => void;
+  updateDraft: (recipe: (draft: Project) => Project) => void;
+  setPreview: (patch: Partial<PreviewState>) => void;
   /** Someone moved the lamp: this stops the sweep. */
   moveLamp: (lamp: Partial<Lamp>) => void;
   /** Moves the lamp without stopping the sweep (the sweep itself, the height slider). */
   setLamp: (lamp: Partial<Lamp>) => void;
   setSweeping: (sweeping: boolean) => void;
-  setHeights: (heights: Float32Array) => void;
-  setTargets: (targets: readonly Float32Array[]) => void;
+  setField: (field: Field) => void;
   /** Resets progress for a new solve. */
   startSolve: (iterations: number) => void;
   updateSolve: (patch: Partial<SolveState>) => void;
@@ -59,12 +80,22 @@ interface AppState {
   }) => void;
 }
 
+/** As in the prototype: a new surface restarts the sweep, or parks the lamp on the first lamp. */
+function showNew(project: Project): Partial<AppState> {
+  const first = project.lamps[0];
+  return prefersReducedMotion
+    ? { lamp: { az: first?.az ?? 270, el: first?.el ?? DEFAULTS.solveElevation } }
+    : { sweeping: true };
+}
+
 export const useAppStore = create<AppState>()((set) => ({
-  mode: "two",
+  project: null,
+  presetId: null,
+  draft: null,
+  preview: { status: "idle", field: null, report: null },
   lamp: { az: 270, el: DEFAULTS.solveElevation },
   sweeping: !prefersReducedMotion,
-  heights: null,
-  targets: null,
+  field: null,
   solve: {
     status: "preparing",
     iteration: 0,
@@ -74,13 +105,19 @@ export const useAppStore = create<AppState>()((set) => ({
   },
   lossHistory: [],
 
-  setMode: (mode) => {
-    // As in the prototype: a new layout restarts the sweep, or parks the lamp on lamp A.
-    set(
-      prefersReducedMotion
-        ? { mode, lamp: { az: 270, el: DEFAULTS.solveElevation } }
-        : { mode, sweeping: true },
+  setProject: (project, presetId) => {
+    set({ project, presetId, draft: project, ...showNew(project) });
+  },
+  commitDraft: () => {
+    set((state) =>
+      state.draft ? { project: state.draft, presetId: null, ...showNew(state.draft) } : {},
     );
+  },
+  updateDraft: (recipe) => {
+    set((state) => (state.draft ? { draft: recipe(state.draft) } : {}));
+  },
+  setPreview: (patch) => {
+    set((state) => ({ preview: { ...state.preview, ...patch } }));
   },
   moveLamp: (lamp) => {
     set((state) => ({ lamp: { ...state.lamp, ...lamp }, sweeping: false }));
@@ -91,11 +128,8 @@ export const useAppStore = create<AppState>()((set) => ({
   setSweeping: (sweeping) => {
     set({ sweeping });
   },
-  setHeights: (heights) => {
-    set({ heights });
-  },
-  setTargets: (targets) => {
-    set({ targets });
+  setField: (field) => {
+    set({ field });
   },
   startSolve: (iterations) => {
     set({

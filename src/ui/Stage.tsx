@@ -3,13 +3,12 @@ import { DEFAULTS, gridSize } from "../core/defaults";
 import { azimuthOf, keyStep, normalizeAz } from "../render/stage/lamp";
 import { createStagePainter } from "../render/stage/painter";
 import { useAppStore, type SolveState } from "../state/store";
-import { LAYOUT_LAMPS } from "./layoutLamps";
+import { useStageLamps } from "./stageLamps";
 import "./Stage.css";
 
 /** Goniometer ring radius in the stage's 100-unit viewBox. */
 const R = 45.5;
 const TICKS = Array.from({ length: 36 }, (_, i) => i * 10);
-const F = gridSize(DEFAULTS.n, DEFAULTS.C);
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 const polar = (deg: number, r: number): [number, number] => [
@@ -50,26 +49,28 @@ function announcement({ status, ms }: SolveState): string {
  * the lamp, or focus the lamp and use the arrow keys.
  */
 export function Stage() {
-  const mode = useAppStore((s) => s.mode);
   const { az, el } = useAppStore((s) => s.lamp);
   const solve = useAppStore((s) => s.solve);
   const moveLamp = useAppStore((s) => s.moveLamp);
   const reliefRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
-  const lamps = LAYOUT_LAMPS[mode];
+  const lamps = useStageLamps();
+  const F = useAppStore((s) => (s.field ? gridSize(s.field.n, s.field.C) : 0));
+  const boundary = useAppStore((s) => s.project?.params.boundary ?? DEFAULTS.boundary);
 
   // The painter draws outside React: at most once a frame, whenever the field or the lamp moves.
+  // A field of another size (a loaded project) gets a fresh painter.
   useEffect(() => {
     const host = reliefRef.current;
-    if (!host) return;
-    const painter = createStagePainter(host, F, DEFAULTS.boundary, "stage__relief");
+    if (!host || !F) return;
+    const painter = createStagePainter(host, F, boundary, "stage__relief");
     host.dataset.renderer = painter.kind;
     let frame = 0;
     const draw = () => {
       frame = 0;
-      const { heights, lamp } = useAppStore.getState();
-      if (!heights) return;
-      painter.setHeights(heights);
+      const { field, lamp } = useAppStore.getState();
+      if (field?.heights.length !== F * F) return;
+      painter.setHeights(field.heights);
       painter.draw(lamp.az, lamp.el);
     };
     const schedule = () => {
@@ -77,14 +78,14 @@ export function Stage() {
     };
     schedule();
     const unsubscribe = useAppStore.subscribe((state, previous) => {
-      if (state.heights !== previous.heights || state.lamp !== previous.lamp) schedule();
+      if (state.field !== previous.field || state.lamp !== previous.lamp) schedule();
     });
     return () => {
       unsubscribe();
       cancelAnimationFrame(frame);
       painter.dispose();
     };
-  }, []);
+  }, [F, boundary]);
 
   const aimAt = (event: PointerEvent<HTMLDivElement>) => {
     const r = event.currentTarget.getBoundingClientRect();
@@ -156,18 +157,18 @@ export function Stage() {
                 />
               );
             })}
-            {lamps.map(({ pic, az: lampAz }) => {
+            {lamps.map(({ key, az: lampAz }) => {
               const [x, y] = polar(lampAz, R + 4.6);
               return (
                 <text
-                  key={pic.key}
+                  key={key}
                   className="stage__lamp-key"
                   x={x}
                   y={y}
                   textAnchor="middle"
                   dominantBaseline="central"
                 >
-                  {pic.key}
+                  {key}
                 </text>
               );
             })}

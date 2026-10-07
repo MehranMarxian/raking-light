@@ -2,12 +2,15 @@ import { Controls } from "./Controls";
 import { Method } from "./Method";
 import { Plates } from "./Plates";
 import { Stage } from "./Stage";
-import { useSampleSolve } from "./useSampleSolve";
+import { Editor } from "./editor/Editor";
+import { useDraftPreview } from "./useDraftPreview";
+import { useProjectSolve } from "./useProjectSolve";
 import { useSweep } from "./useSweep";
 import "./App.css";
 
 export function App() {
-  useSampleSolve();
+  useProjectSolve();
+  useDraftPreview();
   useSweep();
 
   return (
@@ -32,6 +35,7 @@ export function App() {
         </section>
         <Plates />
         <Method />
+        <Editor />
       </main>
 
       <footer className="foot">

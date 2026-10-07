@@ -1,17 +1,25 @@
 import { formatAz } from "../render/stage/lamp";
 import { useAppStore } from "../state/store";
 import { LampLabel, LampReading } from "./LampText";
-import { LAYOUT_LAMPS } from "./layoutLamps";
+import type { SampleLayoutId } from "../core/layouts";
+import { samplePreset } from "../render/samples";
+import { useStageLamps } from "./stageLamps";
 import "./Controls.css";
 
 const FLAT_EL = 90;
 
-/** The prototype's controls: layout, lamp height, sweep, flat light, one button per picture. */
+const PRESETS: { id: SampleLayoutId; label: string }[] = [
+  { id: "two", label: "Two" },
+  { id: "three", label: "Three" },
+];
+
+/** The prototype's controls: sample layout, lamp height, sweep, flat light, one button per picture. */
 export function Controls() {
-  const mode = useAppStore((s) => s.mode);
+  const presetId = useAppStore((s) => s.presetId);
+  const lamps = useStageLamps();
   const { az, el } = useAppStore((s) => s.lamp);
   const sweeping = useAppStore((s) => s.sweeping);
-  const setMode = useAppStore((s) => s.setMode);
+  const setProject = useAppStore((s) => s.setProject);
   const setLamp = useAppStore((s) => s.setLamp);
   const moveLamp = useAppStore((s) => s.moveLamp);
   const setSweeping = useAppStore((s) => s.setSweeping);
@@ -21,26 +29,22 @@ export function Controls() {
     <div className="controls">
       <div className="row" role="group" aria-label="Number of hidden pictures">
         <span className="cap">Hidden pictures</span>
-        <button
-          type="button"
-          className="btn"
-          aria-pressed={mode === "two"}
-          onClick={() => {
-            if (mode !== "two") setMode("two");
-          }}
-        >
-          Two
-        </button>
-        <button
-          type="button"
-          className="btn"
-          aria-pressed={mode === "three"}
-          onClick={() => {
-            if (mode !== "three") setMode("three");
-          }}
-        >
-          Three
-        </button>
+        {PRESETS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            className="btn"
+            aria-pressed={presetId === id}
+            onClick={() => {
+              if (presetId === id) return;
+              void samplePreset(id).then((preset) => {
+                setProject(preset, id);
+              });
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="slider">
@@ -82,9 +86,9 @@ export function Controls() {
       </div>
 
       <div className="row" role="group" aria-label="Show a picture">
-        {LAYOUT_LAMPS[mode].map((lamp) => (
+        {lamps.map((lamp) => (
           <button
-            key={lamp.pic.key}
+            key={lamp.key}
             type="button"
             className="btn"
             onClick={() => {
@@ -104,7 +108,7 @@ export function Controls() {
           EL <b>{elRounded}°</b>
         </span>
         <span>
-          <LampReading az={az} el={el} mode={mode} />
+          <LampReading az={az} el={el} lamps={lamps} />
         </span>
       </p>
     </div>

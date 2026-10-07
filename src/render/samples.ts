@@ -1,26 +1,15 @@
-import { luminance } from "../core/targets";
+import { DEFAULTS, resolveParams } from "../core/defaults";
+import { SAMPLE_LAYOUTS, type SampleLayoutId } from "../core/layouts";
+import type { Project } from "../core/project";
+import { canonicalTarget } from "../core/targets";
+import { DESIGN, canvasToTarget, context2d, makeCanvas, waitForFont } from "./pictures";
 
 /**
  * The prototype's sample pictures, drawn on a canvas and reduced to n × n cell targets, in the
  * order of SAMPLE_PICTURES: crescent with stars, khatam star, and نور ("light") in Vazirmatn 900.
  */
 
-/** Pictures are drawn on a square this size, as in the prototype (96 cells × 4), then resampled. */
-const DESIGN = 384;
 const PERSIAN = '900 150px "Vazirmatn", "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif';
-
-function canvas(size: number): HTMLCanvasElement {
-  const c = document.createElement("canvas");
-  c.width = size;
-  c.height = size;
-  return c;
-}
-
-function context(c: HTMLCanvasElement): CanvasRenderingContext2D {
-  const g = c.getContext("2d", { willReadFrequently: true });
-  if (!g) throw new Error("Canvas 2D is not available");
-  return g;
-}
 
 function star(g: CanvasRenderingContext2D, x: number, y: number, r: number): void {
   g.beginPath();
@@ -40,8 +29,8 @@ function disc(g: CanvasRenderingContext2D, x: number, y: number, r: number): voi
 }
 
 function drawSample(k: number): HTMLCanvasElement {
-  const cv = canvas(DESIGN);
-  const g = context(cv);
+  const cv = makeCanvas(DESIGN);
+  const g = context2d(cv);
   const c = DESIGN / 2;
   g.fillStyle = "#000";
   g.fillRect(0, 0, DESIGN, DESIGN);
@@ -83,22 +72,9 @@ function drawSample(k: number): HTMLCanvasElement {
   return cv;
 }
 
-function toTarget(source: HTMLCanvasElement, n: number): Float32Array {
-  const out = canvas(n);
-  const g = context(out);
-  g.imageSmoothingQuality = "high";
-  g.drawImage(source, 0, 0, n, n);
-  return luminance(g.getImageData(0, 0, n, n).data, n * n);
-}
-
 async function drawSamples(n: number): Promise<Float32Array[]> {
-  const timeout = new Promise((resolve) => setTimeout(resolve, 2500));
-  try {
-    await Promise.race([document.fonts.load('900 150px "Vazirmatn"', "نور"), timeout]);
-  } catch {
-    // Draw with a fallback font.
-  }
-  return [0, 1, 2].map((k) => toTarget(drawSample(k), n));
+  await waitForFont('900 150px "Vazirmatn"', "نور");
+  return [0, 1, 2].map((k) => canonicalTarget(canvasToTarget(drawSample(k), n)));
 }
 
 const cache = new Map<number, Promise<Float32Array[]>>();
@@ -111,4 +87,20 @@ export function loadSampleTargets(n: number): Promise<Float32Array[]> {
     cache.set(n, targets);
   }
   return targets;
+}
+
+/** One of the prototype's sample layouts as a project: two lamps (crescent + نور) or three. */
+export async function samplePreset(id: SampleLayoutId, n: number = DEFAULTS.n): Promise<Project> {
+  const targets = await loadSampleTargets(n);
+  return {
+    n,
+    C: DEFAULTS.C,
+    params: resolveParams(),
+    lamps: SAMPLE_LAYOUTS[id].map(({ picture, az, el }) => ({
+      az,
+      el,
+      source: { kind: "sample", sample: picture },
+      target: targets[picture]!,
+    })),
+  };
 }

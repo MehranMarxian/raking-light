@@ -13,6 +13,7 @@
   --lamp-hot: #fff3df; /* centre of the lamp's glow */
   --lamp-core: #fff6e8; /* the bulb */
   --void: #101114; /* behind the medallion */
+  --warn: #e8866c; /* a layout that will cost clarity */
 
   --f-display: "Marcellus", "Trajan Pro", Georgia, serif;
   --f-body: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;

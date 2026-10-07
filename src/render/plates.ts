@@ -1,4 +1,3 @@
-import type { LampPlacement } from "../core/layouts";
 import { normalizeAz } from "./stage/lamp";
 
 export type PlateSpec =
@@ -11,7 +10,7 @@ export type PlateSpec =
  * each lamp. With fewer than three lamps a fourth plate shows the cross-fade halfway along the
  * clockwise arc between the first two.
  */
-export function plateSpecs(lamps: readonly LampPlacement[]): PlateSpec[] {
+export function plateSpecs(lamps: readonly { az: number; el: number }[]): PlateSpec[] {
   const plates: PlateSpec[] = [{ kind: "overhead", az: 45, el: 90 }];
   lamps.forEach((lamp, index) => plates.push({ kind: "lamp", index, az: lamp.az, el: lamp.el }));
   const [first, second] = lamps;

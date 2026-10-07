@@ -41,6 +41,8 @@ export const SAMPLE_LAYOUTS = {
   ],
 } as const satisfies Record<string, readonly LampPlacement[]>;
 
+export type SampleLayoutId = keyof typeof SAMPLE_LAYOUTS;
+
 /** Smallest angle between two azimuths, in degrees, in [0, 180]. */
 export function angularDistance(a: number, b: number): number {
   const d = (((a - b) % 360) + 360) % 360;

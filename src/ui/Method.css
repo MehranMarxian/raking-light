@@ -29,7 +29,7 @@
 /* Target thumbnails */
 .targets {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
   gap: 10px;
 }
 
@@ -46,10 +46,6 @@
   image-rendering: pixelated;
   border-radius: 3px;
   background: #000;
-}
-
-.targets .off {
-  opacity: 0.3;
 }
 
 /* Loss chart */

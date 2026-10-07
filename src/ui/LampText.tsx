@@ -1,24 +1,30 @@
-import type { Picture } from "../core/layouts";
 import { readLamp } from "../render/stage/lamp";
-import type { Mode } from "../state/store";
-import { LAYOUT_LAMPS, type StageLamp } from "./layoutLamps";
+import type { StageLamp } from "./stageLamps";
 
-export function PictureName({ pic }: { pic: Picture }) {
-  return <bdi lang={pic.lang}>{pic.name}</bdi>;
+/** A picture's name, isolated so right-to-left names sit correctly in left-to-right text. */
+export function PictureName({ name, lang }: { name: string; lang?: string | undefined }) {
+  return <bdi lang={lang}>{name}</bdi>;
 }
 
 /** "A · Crescent" */
 export function LampLabel({ lamp }: { lamp: StageLamp }) {
   return (
     <>
-      {lamp.pic.key} · <PictureName pic={lamp.pic} />
+      {lamp.key} · <PictureName name={lamp.name} lang={lamp.lang} />
     </>
   );
 }
 
 /** What the stage shows with the lamp at (az, el), in the prototype's words. */
-export function LampReading({ az, el, mode }: { az: number; el: number; mode: Mode }) {
-  const lamps = LAYOUT_LAMPS[mode];
+export function LampReading({
+  az,
+  el,
+  lamps,
+}: {
+  az: number;
+  el: number;
+  lamps: readonly StageLamp[];
+}) {
   const reading = readLamp(
     az,
     el,

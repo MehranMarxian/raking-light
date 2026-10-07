@@ -1,42 +1,41 @@
 import { useEffect, useRef } from "react";
 import { DEFAULTS, gridSize } from "../core/defaults";
-import { SAMPLE_PICTURES } from "../core/layouts";
 import { paintHeightMap, paintTarget } from "../render/maps";
 import { formatAz } from "../render/stage/lamp";
 import { useAppStore } from "../state/store";
 import { LossChart } from "./LossChart";
-import { LAYOUT_LAMPS } from "./layoutLamps";
+import { useStageLamps } from "./stageLamps";
 import { usePaintKey } from "./usePaintKey";
 import "./Method.css";
 
-const { n, C } = DEFAULTS;
-const F = gridSize(n, C);
-
 /** How the surface is solved: pictures become targets, the loss falls, one height field comes out. */
 export function Method() {
-  const mode = useAppStore((s) => s.mode);
-  const targets = useAppStore((s) => s.targets);
+  const project = useAppStore((s) => s.project);
+  const n = project?.n ?? DEFAULTS.n;
+  const C = project?.C ?? DEFAULTS.C;
+  const F = gridSize(n, C);
   const solve = useAppStore((s) => s.solve);
   const lossHistory = useAppStore((s) => s.lossHistory);
   const paintKey = usePaintKey();
   const thumbs = useRef<(HTMLCanvasElement | null)[]>([]);
   const heightMap = useRef<HTMLCanvasElement>(null);
-  const lamps = LAYOUT_LAMPS[mode];
+  const lamps = useStageLamps();
 
   useEffect(() => {
-    if (!targets) return;
-    targets.forEach((target, k) => {
+    project?.lamps.forEach((lamp, k) => {
       const canvas = thumbs.current[k];
-      if (canvas) paintTarget(canvas, target, n);
+      if (canvas) paintTarget(canvas, lamp.target, project.n);
     });
-  }, [targets]);
+  }, [project]);
 
   useEffect(() => {
-    const { heights } = useAppStore.getState();
-    if (heights && heightMap.current) paintHeightMap(heightMap.current, heights, F);
+    const { field } = useAppStore.getState();
+    if (field && heightMap.current) {
+      paintHeightMap(heightMap.current, field.heights, gridSize(field.n, field.C));
+    }
   }, [paintKey]);
 
-  const lampList = lamps.map((l) => formatAz(l.az)).join(", ");
+  const lampList = lamps.map((l) => `${formatAz(l.az)} (EL ${String(l.el)}°)`).join(", ");
   const solveTime =
     solve.status === "done" && solve.ms !== null
       ? `${(solve.ms / 1000).toFixed(1)} s in this browser`
@@ -54,24 +53,21 @@ export function Method() {
         <div className="step">
           <div className="fig">
             <div className="targets">
-              {SAMPLE_PICTURES.map((pic, k) => {
-                const lamp = lamps.find((l) => l.pic.key === pic.key);
-                return (
-                  <figure key={pic.key} className={lamp ? undefined : "off"}>
-                    <canvas
-                      ref={(canvas) => {
-                        thumbs.current[k] = canvas;
-                      }}
-                      width={n}
-                      height={n}
-                      aria-label={`Target picture ${pic.key}`}
-                    />
-                    <span className="cap">
-                      {pic.key} · {lamp ? formatAz(lamp.az) : "not used"}
-                    </span>
-                  </figure>
-                );
-              })}
+              {lamps.map((lamp, k) => (
+                <figure key={lamp.key}>
+                  <canvas
+                    ref={(canvas) => {
+                      thumbs.current[k] = canvas;
+                    }}
+                    width={n}
+                    height={n}
+                    aria-label={`Target picture for lamp ${lamp.key}`}
+                  />
+                  <span className="cap">
+                    {lamp.key} · {formatAz(lamp.az)}
+                  </span>
+                </figure>
+              ))}
             </div>
           </div>
           <h3>Pictures become cell targets</h3>
@@ -115,7 +111,7 @@ export function Method() {
             </dd>
             <dt>Lamps</dt>
             <dd>
-              {lamps.length} at {lampList}, all {DEFAULTS.solveElevation}° high
+              {lamps.length} at {lampList}
             </dd>
             <dt>Iterations</dt>
             <dd>{solve.iterations}</dd>

@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { DEFAULTS } from "../core/defaults";
-import { SAMPLE_LAYOUTS } from "../core/layouts";
 import { nearestLampIndex } from "../render/stage/lamp";
 import { sweepAngle, sweepStartTime } from "../render/stage/sweep";
 import { useAppStore } from "../state/store";
@@ -12,11 +11,12 @@ import { useAppStore } from "../state/store";
  */
 export function useSweep(): void {
   const sweeping = useAppStore((s) => s.sweeping);
-  const mode = useAppStore((s) => s.mode);
+  // A string, so the sweep restarts only when the lamp azimuths really change.
+  const azimuthKey = useAppStore((s) => s.project?.lamps.map((l) => l.az).join(",") ?? "270,0");
 
   useEffect(() => {
     if (!sweeping) return;
-    const azimuths = SAMPLE_LAYOUTS[mode].map((l) => l.az);
+    const azimuths = azimuthKey.split(",").map(Number);
     const { lamp, setLamp } = useAppStore.getState();
     if (lamp.el > 40) setLamp({ el: DEFAULTS.solveElevation });
     const start = performance.now() - sweepStartTime(nearestLampIndex(lamp.az, azimuths) ?? 0);
@@ -28,5 +28,5 @@ export function useSweep(): void {
     return () => {
       cancelAnimationFrame(frame);
     };
-  }, [sweeping, mode]);
+  }, [sweeping, azimuthKey]);
 }
