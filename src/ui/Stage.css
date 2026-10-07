@@ -1,20 +1,21 @@
-.stage {
-  margin: 0;
+.stage-wrap {
   display: grid;
   justify-items: center;
-  gap: 14px;
   min-width: 0;
 }
 
-.stage__frame {
+.stage {
   position: relative;
   width: min(100%, 580px);
   aspect-ratio: 1;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.stage__art {
-  position: absolute;
-  inset: 0;
+.stage:active {
+  cursor: grabbing;
 }
 
 /* The specimen: a disc set into the bench, 82% of the frame like the prototype. */
@@ -91,6 +92,21 @@
   fill: var(--lamp-core);
 }
 
+.stage__handle {
+  fill: transparent;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.stage__handle:focus {
+  outline: none;
+}
+
+.stage__handle:focus-visible {
+  stroke: var(--lamp);
+  stroke-width: 0.5;
+}
+
 /* Solver status */
 .stage__badge {
   position: absolute;
@@ -121,29 +137,4 @@
 
 .stage__badge[data-status="solving"]::before {
   background: var(--lamp);
-}
-
-.stage__badge[data-status="done"]::before {
-  background: var(--lamp);
-  box-shadow: 0 0 6px var(--lamp);
-}
-
-.stage__caption {
-  display: grid;
-  gap: 2px;
-  justify-items: center;
-  text-align: center;
-}
-
-.stage__title {
-  font-family: var(--f-display);
-  font-size: 1.05rem;
-  color: var(--plaster);
-}
-
-.stage__lamps {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
 }

@@ -1,27 +1,33 @@
+import { Controls } from "./Controls";
 import { Stage } from "./Stage";
 import { useSampleSolve } from "./useSampleSolve";
+import { useSweep } from "./useSweep";
 import "./App.css";
 
 export function App() {
   useSampleSolve();
+  useSweep();
 
   return (
-    <div className="shell">
-      <main className="hero">
-        <div className="hero__copy">
-          <span className="eyebrow">Generative relief</span>
-          <h1>Raking Light</h1>
-          <p className="lede">
-            One relief surface holds several pictures. Under flat light it reads as even, speckled
-            plaster. Bring a lamp down low and move it around the edge, and each picture rises out
-            of the shadows at its own angle.
-          </p>
-          <p className="muted hero__note">
-            Work in progress. This surface was solved in your browser when the page opened. Switch
-            lamps to see each picture; dragging the lamp around the ring comes next.
-          </p>
-        </div>
-        <Stage />
+    <div className="page">
+      <main className="page__main">
+        <section className="hero" aria-labelledby="title">
+          <div className="hero__copy">
+            <span className="eyebrow">Generative relief</span>
+            <h1 id="title">Raking Light</h1>
+            <p className="lede">
+              One relief surface holds several pictures. Under flat light it reads as even, speckled
+              plaster. Bring a lamp down low and move it around the edge, and each picture rises out
+              of the shadows at its own angle.
+            </p>
+            <p className="muted">
+              The surface shown here was solved in your browser when this page opened. Drag around
+              the ring to move the lamp.
+            </p>
+            <Controls />
+          </div>
+          <Stage />
+        </section>
       </main>
 
       <footer className="foot">

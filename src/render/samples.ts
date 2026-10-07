@@ -91,8 +91,7 @@ function toTarget(source: HTMLCanvasElement, n: number): Float32Array {
   return luminance(g.getImageData(0, 0, n, n).data, n * n);
 }
 
-/** Draws the three sample pictures as n × n targets, once Vazirmatn has loaded (or 2.5 s passed). */
-export async function loadSampleTargets(n: number): Promise<Float32Array[]> {
+async function drawSamples(n: number): Promise<Float32Array[]> {
   const timeout = new Promise((resolve) => setTimeout(resolve, 2500));
   try {
     await Promise.race([document.fonts.load('900 150px "Vazirmatn"', "نور"), timeout]);
@@ -100,4 +99,16 @@ export async function loadSampleTargets(n: number): Promise<Float32Array[]> {
     // Draw with a fallback font.
   }
   return [0, 1, 2].map((k) => toTarget(drawSample(k), n));
+}
+
+const cache = new Map<number, Promise<Float32Array[]>>();
+
+/** The three sample pictures as n × n targets, drawn once Vazirmatn has loaded (or 2.5 s passed). */
+export function loadSampleTargets(n: number): Promise<Float32Array[]> {
+  let targets = cache.get(n);
+  if (!targets) {
+    targets = drawSamples(n);
+    cache.set(n, targets);
+  }
+  return targets;
 }

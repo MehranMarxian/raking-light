@@ -1,11 +1,16 @@
-.shell {
+/* A museum documentation sheet: the specimen in its ring, then the plates and the method. */
+.page {
   max-width: 1140px;
-  min-height: 100dvh;
   margin: 0 auto;
   padding: 28px clamp(16px, 4vw, 40px) 24px;
   display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 48px;
+  gap: clamp(64px, 9vw, 112px);
+}
+
+.page__main {
+  display: grid;
+  gap: clamp(64px, 9vw, 112px);
+  min-width: 0;
 }
 
 .hero {
@@ -35,11 +40,6 @@
 
 .lede {
   font-size: 1.125rem;
-}
-
-.hero__note {
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
 }
 
 .foot {

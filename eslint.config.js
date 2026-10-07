@@ -39,7 +39,7 @@ export default defineConfig([
   {
     // Numeric loops index typed arrays in range by construction, but noUncheckedIndexedAccess
     // still types every read as possibly undefined.
-    files: ["src/core/**/*.ts", "src/render/**/*.ts", "tests/core/**/*.ts"],
+    files: ["src/core/**/*.ts", "src/render/**/*.ts", "tests/**/*.ts"],
     rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },
 

@@ -6,21 +6,21 @@ import { loadSampleTargets } from "../render/samples";
 import { useAppStore } from "../state/store";
 import { SolveCancelled, createSolverClient } from "../workers/solverClient";
 
-/** Solves the two-lamp sample (crescent + نور) when the page opens, streaming it to the store. */
+/**
+ * Solves the sample layout for the current mode, and again whenever the mode changes, streaming
+ * each snapshot to the store. Two lamps: crescent + نور. Three: crescent + khatam star + نور.
+ */
 export function useSampleSolve(): void {
+  const mode = useAppStore((s) => s.mode);
+
   useEffect(() => {
-    const { setHeights, updateSolve } = useAppStore.getState();
+    const { setHeights, setTargets, startSolve, updateSolve, recordProgress } =
+      useAppStore.getState();
     const { n, C } = DEFAULTS;
     const params = resolveParams();
     // Show the solver's starting field at once; the snapshots continue from it.
     setHeights(initialHeights(gridSize(n, C), params.initSigma, params.seed));
-    updateSolve({
-      status: "preparing",
-      iteration: 0,
-      iterations: params.iterations,
-      loss: null,
-      ms: null,
-    });
+    startSolve(params.iterations);
 
     const client = createSolverClient();
     let live = true;
@@ -28,7 +28,8 @@ export function useSampleSolve(): void {
     const run = async () => {
       const targets = await loadSampleTargets(n);
       if (!live) return;
-      const lamps = SAMPLE_LAYOUTS.two.map(({ picture, az, el }) => {
+      setTargets(targets);
+      const lamps = SAMPLE_LAYOUTS[mode].map(({ picture, az, el }) => {
         const target = targets[picture];
         if (!target) throw new Error(`Missing sample picture ${String(picture)}`);
         return { az, el, target };
@@ -37,12 +38,7 @@ export function useSampleSolve(): void {
       await client.solve({ n, C, lamps, params }, (progress) => {
         if (!live) return;
         setHeights(progress.heights);
-        updateSolve({
-          status: progress.done ? "done" : "solving",
-          iteration: progress.iteration,
-          loss: progress.loss,
-          ms: progress.ms,
-        });
+        recordProgress(progress);
       });
     };
 
@@ -56,5 +52,5 @@ export function useSampleSolve(): void {
       live = false;
       client.dispose();
     };
-  }, []);
+  }, [mode]);
 }

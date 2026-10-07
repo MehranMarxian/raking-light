@@ -1,21 +1,15 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from "react";
 import { DEFAULTS, gridSize } from "../core/defaults";
-import { SAMPLE_LAYOUTS, SAMPLE_PICTURES, angularDistance, type Picture } from "../core/layouts";
-import { createReliefPainter, type ReliefPainter } from "../render/stage/canvas2d";
-import { useAppStore, type Lamp, type SolveState } from "../state/store";
+import { azimuthOf, keyStep, normalizeAz } from "../render/stage/lamp";
+import { createStagePainter } from "../render/stage/painter";
+import { useAppStore, type SolveState } from "../state/store";
+import { LAYOUT_LAMPS } from "./layoutLamps";
 import "./Stage.css";
 
 /** Goniometer ring radius in the stage's 100-unit viewBox. */
 const R = 45.5;
 const TICKS = Array.from({ length: 36 }, (_, i) => i * 10);
 const F = gridSize(DEFAULTS.n, DEFAULTS.C);
-const FLAT_EL = 90;
-
-/** The lamps of the sample being solved, with their pictures. */
-const LAMPS = SAMPLE_LAYOUTS.two.flatMap(({ picture, az, el }) => {
-  const pic = SAMPLE_PICTURES[picture];
-  return pic ? [{ pic, az, el }] : [];
-});
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 const polar = (deg: number, r: number): [number, number] => [
@@ -23,34 +17,15 @@ const polar = (deg: number, r: number): [number, number] => [
   50 + r * Math.sin(rad(deg)),
 ];
 const point = (deg: number, r: number) => polar(deg, r).join(",");
-const azLabel = (deg: number) =>
-  `${String(Math.round(((deg % 360) + 360) % 360)).padStart(3, "0")}°`;
 
-function PictureName({ pic }: { pic: Picture }) {
-  return <bdi lang={pic.lang}>{pic.name}</bdi>;
-}
-
-/** Plate title for where the lamp is, as in the prototype. */
-function LampTitle({ lamp }: { lamp: Lamp }) {
-  if (lamp.el >= 70) return <>Normal light</>;
-  if (lamp.el >= 40) return <>Lamp too high for clear pictures</>;
-  const near = LAMPS.find((l) => angularDistance(lamp.az, l.az) <= 14);
-  if (!near) return <>Between lamps</>;
-  return (
-    <>
-      Lamp {near.pic.key} · <PictureName pic={near.pic} />
-    </>
-  );
-}
-
-function badgeText({ status, iteration, iterations, loss, ms }: SolveState): string {
+function badgeText({ status, iteration, iterations }: SolveState): string | null {
   switch (status) {
     case "preparing":
       return "Preparing the surface…";
     case "solving":
-      return `Solving · step ${iteration} / ${iterations}${loss === null ? "" : ` · loss ${loss.toFixed(3)}`}`;
+      return `Solving surface · step ${iteration} / ${iterations}`;
     case "done":
-      return `Solved in ${((ms ?? 0) / 1000).toFixed(1)} s${loss === null ? "" : ` · loss ${loss.toFixed(3)}`}`;
+      return null;
     case "unavailable":
       return "Solver unavailable in this browser";
   }
@@ -71,47 +46,93 @@ function announcement({ status, ms }: SolveState): string {
 }
 
 /**
- * The round stage: the relief in a goniometer ring, lit by one lamp. M1 paints it with an interim
- * canvas renderer; M2 replaces that with WebGL and adds dragging, the height slider and the sweep.
+ * The round stage: the relief in a goniometer ring, lit by one lamp. Drag anywhere on it to move
+ * the lamp, or focus the lamp and use the arrow keys.
  */
 export function Stage() {
-  const lamp = useAppStore((s) => s.lamp);
-  const heights = useAppStore((s) => s.heights);
+  const mode = useAppStore((s) => s.mode);
+  const { az, el } = useAppStore((s) => s.lamp);
   const solve = useAppStore((s) => s.solve);
-  const setLamp = useAppStore((s) => s.setLamp);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const painterRef = useRef<ReliefPainter | null>(null);
-  const { az, el } = lamp;
+  const moveLamp = useAppStore((s) => s.moveLamp);
+  const reliefRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const lamps = LAYOUT_LAMPS[mode];
 
+  // The painter draws outside React: at most once a frame, whenever the field or the lamp moves.
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !heights) return;
-    painterRef.current ??= createReliefPainter(canvas, F, DEFAULTS.boundary);
-    const painter = painterRef.current;
-    const frame = requestAnimationFrame(() => {
-      painter.paint(heights, az, el);
+    const host = reliefRef.current;
+    if (!host) return;
+    const painter = createStagePainter(host, F, DEFAULTS.boundary, "stage__relief");
+    host.dataset.renderer = painter.kind;
+    let frame = 0;
+    const draw = () => {
+      frame = 0;
+      const { heights, lamp } = useAppStore.getState();
+      if (!heights) return;
+      painter.setHeights(heights);
+      painter.draw(lamp.az, lamp.el);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(draw);
+    };
+    schedule();
+    const unsubscribe = useAppStore.subscribe((state, previous) => {
+      if (state.heights !== previous.heights || state.lamp !== previous.lamp) schedule();
     });
     return () => {
+      unsubscribe();
       cancelAnimationFrame(frame);
+      painter.dispose();
     };
-  }, [heights, az, el]);
+  }, []);
+
+  const aimAt = (event: PointerEvent<HTMLDivElement>) => {
+    const r = event.currentTarget.getBoundingClientRect();
+    moveLamp({
+      az: azimuthOf(event.clientX - (r.left + r.width / 2), event.clientY - (r.top + r.height / 2)),
+    });
+  };
+
+  const onKeyDown = (event: KeyboardEvent<SVGCircleElement>) => {
+    const step = keyStep(event.key, event.shiftKey);
+    if (step === null) return;
+    event.preventDefault();
+    moveLamp({ az: normalizeAz(az + step) });
+  };
 
   const [lampX, lampY] = polar(az, R);
   const spread = 20 * Math.max(0.2, 1 - el / 90);
+  const badge = badgeText(solve);
+  const azRounded = Math.round(normalizeAz(az)) % 360;
 
   return (
-    <figure className="stage">
-      <div className="stage__frame">
+    <div className="stage-wrap">
+      <div
+        className="stage"
+        onPointerDown={(event) => {
+          dragging.current = true;
+          event.currentTarget.setPointerCapture(event.pointerId);
+          aimAt(event);
+        }}
+        onPointerMove={(event) => {
+          if (dragging.current) aimAt(event);
+        }}
+        onPointerUp={() => {
+          dragging.current = false;
+        }}
+        onPointerCancel={() => {
+          dragging.current = false;
+        }}
+      >
         <div
-          className="stage__art"
+          ref={reliefRef}
+          className="stage__medallion"
           role="img"
-          aria-label={`Relief surface under a lamp at azimuth ${Math.round(az)}°, elevation ${Math.round(el)}°`}
-        >
-          <div className="stage__medallion">
-            <canvas ref={canvasRef} className="stage__relief" />
-          </div>
+          aria-label="Rendered relief surface lit by the virtual lamp"
+        />
 
-          <svg className="stage__ring" viewBox="0 0 100 100" aria-hidden="true">
+        <svg className="stage__ring" viewBox="0 0 100 100">
+          <g aria-hidden="true">
             <defs>
               <radialGradient id="rl-glow">
                 <stop className="stage__glow-hot" offset="0" />
@@ -121,7 +142,7 @@ export function Stage() {
             </defs>
             <circle className="stage__circle" cx="50" cy="50" r={R} />
             {TICKS.map((a) => {
-              const major = LAMPS.some((l) => l.az === a);
+              const major = lamps.some((l) => l.az === a);
               const [x1, y1] = polar(a, R - (a % 30 === 0 ? 1.8 : 1));
               const [x2, y2] = polar(a, R + (major ? 2.2 : 0));
               return (
@@ -135,7 +156,7 @@ export function Stage() {
                 />
               );
             })}
-            {LAMPS.map(({ pic, az: lampAz }) => {
+            {lamps.map(({ pic, az: lampAz }) => {
               const [x, y] = polar(lampAz, R + 4.6);
               return (
                 <text
@@ -157,51 +178,32 @@ export function Stage() {
             />
             <circle cx={lampX} cy={lampY} r={4.2} fill="url(#rl-glow)" />
             <circle className="stage__bulb" cx={lampX} cy={lampY} r={1.3} />
-          </svg>
-        </div>
+          </g>
+          <circle
+            className="stage__handle"
+            cx={lampX}
+            cy={lampY}
+            r={4.5}
+            tabIndex={0}
+            role="slider"
+            aria-label="Lamp direction"
+            aria-valuemin={0}
+            aria-valuemax={359}
+            aria-valuenow={azRounded}
+            aria-valuetext={`${String(azRounded)} degrees`}
+            onKeyDown={onKeyDown}
+          />
+        </svg>
 
-        <p className="stage__badge" data-status={solve.status} aria-hidden="true">
-          {badgeText(solve)}
-        </p>
+        {badge && (
+          <p className="stage__badge" data-status={solve.status} aria-hidden="true">
+            {badge}
+          </p>
+        )}
         <p className="sr-only" role="status">
           {announcement(solve)}
         </p>
       </div>
-
-      <figcaption className="stage__caption">
-        <span className="stage__title">
-          <LampTitle lamp={lamp} />
-        </span>
-        <span className="cap">
-          AZ {azLabel(az)} · EL {Math.round(el)}°
-        </span>
-      </figcaption>
-
-      <div className="stage__lamps" role="group" aria-label="Lamp position">
-        {LAMPS.map(({ pic, az: lampAz, el: lampEl }) => (
-          <button
-            key={pic.key}
-            type="button"
-            className="btn"
-            aria-pressed={az === lampAz && el === lampEl}
-            onClick={() => {
-              setLamp({ az: lampAz, el: lampEl });
-            }}
-          >
-            {pic.key} · <PictureName pic={pic} />
-          </button>
-        ))}
-        <button
-          type="button"
-          className="btn"
-          aria-pressed={el === FLAT_EL}
-          onClick={() => {
-            setLamp({ az, el: FLAT_EL });
-          }}
-        >
-          Flat light
-        </button>
-      </div>
-    </figure>
+    </div>
   );
 }
