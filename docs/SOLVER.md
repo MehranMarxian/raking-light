@@ -1,6 +1,6 @@
 # Raking Light · Solver
 
-How Raking Light turns a set of pictures into one height field. Everything here was verified in `reference/prototype.html` on 2026-10-07.
+How Raking Light turns a set of pictures into one height field. Everything here was verified in `reference/prototype.html` on 2026-10-07. The TypeScript port in `src/core/` reproduces the prototype bit for bit when run with its periodic edges (`tests/core/solver.reference.test.ts`).
 
 ## 1. Model
 
@@ -69,7 +69,7 @@ g[y+1] += d·∂s/∂hy      g[y] −= d·∂s/∂hy
 
 Adam, `lr = 0.05`, `β1 = 0.9`, `β2 = 0.999`, `ε = 1e−12`, 300 iterations. Initialize `h ~ N(0, 0.6)` from a seeded PRNG (mulberry32, seed 7 in the prototype) so results are reproducible. Stream a height snapshot to the UI every 5 iterations so the user watches the pictures emerge.
 
-Cost per iteration: two passes over `F²` facets per lamp (forward, then gradient). 384², 2 lamps + flat: about 15–25 ms in JS.
+Cost per iteration: two passes over `F²` facets per lamp (forward, then gradient). 384², 2 lamps + flat: about 15–25 ms in JS. Measured for the port on the owner's desktop: about 12 ms, so the 2-lamp sample solves in 3.5–3.6 s in the production build. In the same browser the prototype takes 3.6–6.3 s.
 
 ## 5. Tuned defaults
 
@@ -84,12 +84,12 @@ Cost per iteration: two passes over `F²` facets per lamp (forward, then gradien
 
 ## 6. Findings
 
-- **2 lamps at 90° apart:** clean separation, final loss ≈ 0.02–0.025.
+- **2 lamps at 90° apart:** clean separation, final loss ≈ 0.02–0.025. The sample (crescent at 270°, نور at 0°) ends at 0.022. Lamp A's render correlates 0.97 with the crescent and −0.08 with نور; lamp C's correlates 0.93 with نور and −0.14 with the crescent.
 - **3 lamps at 120°:** visible negative ghosts, final loss ≈ 0.03–0.06. Reason: for small slopes, `s_k ≈ sin e − cos e · D_θk h`, and `D_0 + D_120 + D_240 = 0`. The clamp `max(u,0)` is the only thing breaking that constraint.
 - **Opposite lamps (θ and θ+180°):** near-inverse pictures. Warn in the layout editor.
 - **Key tolerance:** pictures cross-fade over about ±25° of azimuth.
-- **Physical scale:** on a 120 mm disc (pitch 0.3125 mm), peak-to-valley depth ≈ 3.1–3.4 mm.
-- **Boundaries:** the prototype wraps around (periodic). Use clamped boundaries for export.
+- **Physical scale:** on a 120 mm disc (pitch 0.3125 mm), peak-to-valley depth ≈ 2.9 mm with the 2-lamp sample and ≈ 3.5 mm with the 3-lamp sample. The prototype's readout and the port agree on these (measured 2026-10-07).
+- **Boundaries:** the prototype wraps around (periodic). The port uses clamped (Neumann) edges by default: the forward difference past the last column or row is 0, so edge facets read as flat in that direction. On the 2-lamp sample the switch is invisible. Final loss is 0.0223 clamped against 0.0225 periodic, with the same depth, the same flat-light spread (0.0102) and the same separation.
 
 ## 7. Decoding Surfaces modes (M5)
 
@@ -115,6 +115,8 @@ Must-have tests in `tests/core/`:
 4. **Flat-light uniformity.** After solving, the std of overhead cell brightness is below a threshold (calibrate from the reference).
 5. **Two-lamp separation.** After solving two binary targets, correlation between the lamp-A render and target A is > 0.8, and with target B is < 0.2.
 6. **Exports.** STL triangle count and bounding box match the grid and mm scale; the 16-bit PNG round-trips through `fast-png` within ±1 level.
+
+Status: tests 1–5 run in `tests/core/`, and test 6 arrives with the exports in M4. Test 4's threshold (std < 0.025) was calibrated on a 32-cell two-lamp problem where the prototype gives 0.0192; without the flat term the std is 0.157. One more test guards the port: with periodic edges it must reproduce the prototype's solver loop bit for bit, both loss and heights, up to the full 384² grid.
 
 ## 9. Open research
 - Cast shadows (ray-march along the lamp direction) for keys narrower than ±25°.

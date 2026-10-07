@@ -51,13 +51,13 @@ Rules:
 - Each facet is shaded with Lambert from forward differences; brightness is averaged per cell (what the eye sees from a step back).
 - Loss = Σ over lamps of (cell brightness − mapped target)² + `wFlat` × (overhead cell brightness − 0.6)². The flat term is what makes the surface read as noise under normal light.
 - Adam, lr 0.05, 300 iterations, init N(0, 0.6) with fixed seed.
-- Measured: 384² grid solves in 5–8 s in a desktop browser, relief depth ≈ 3.1 mm on a 120 mm disc.
+- Measured: 384² grid solves in 3.5–8 s in a desktop browser (the port: 3.5–3.6 s on the owner's machine). Relief depth on a 120 mm disc is ≈ 2.9 mm with 2 lamps and ≈ 3.5 mm with 3.
 
 ## Key findings to respect
 1. **Two lamps 90° apart separate almost perfectly.** Three lamps at 120° leave faint *negative* ghosts, because in the small-slope regime the three directional derivatives sum to ~zero (bright for one lamp ⇒ dark for the others). Opposite lamps (180°) are near-inverses of each other — never offer that layout without warning.
 2. Under raking light the darkest achievable background is about `sin(elevation)`; asking for darker wastes the optimizer's effort. Target mapping `lo = 0.1, hi = 0.85` works well at 18°.
 3. Pictures cross-fade over roughly ±25° of lamp azimuth. That is the "key tolerance" for Decoding Surfaces.
-4. The prototype uses **periodic (wrap-around) boundaries**. That is wrong for physical export — switch to clamped/Neumann boundaries in the TS port and confirm results match.
+4. The prototype uses **periodic (wrap-around) boundaries**. That is wrong for physical export, so the TS port defaults to clamped/Neumann boundaries. Results match the prototype's (docs/SOLVER.md §6). Periodic mode stays in `src/core` only for the bit-for-bit parity test.
 5. Strong shapes and text survive best. Photos need contrast shaping (levels to 2nd–98th percentile).
 
 ## Visual identity (from the prototype)

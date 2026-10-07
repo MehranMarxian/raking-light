@@ -14,7 +14,8 @@ Each milestone ends with: `npm run build` passes, `npm test` passes, the app run
 - Port the solver from `reference/prototype.html` to `src/core/solver.ts` (+ `shading.ts`, `rng.ts`, `targets.ts`, `layouts.ts`).
 - Switch to clamped boundaries; confirm results still match the reference visually.
 - Worker wrapper streaming progress (iteration, loss, height snapshot every 5 iterations, transferables).
-- All tests from [SOLVER.md §8 Testing](SOLVER.md#8-testing), especially the gradient check.
+- All tests from [SOLVER.md §8 Testing](SOLVER.md#8-testing), especially the gradient check. (Test 6 checks exports, so it lands with M4.)
+- Interim Canvas 2D preview on the stage, with lamp buttons for A, C and flat light, so the solve can be watched. M2's WebGL stage replaces it.
 **Done when** the 2-lamp sample (crescent + نور) solves in under 8 s and the tests pass.
 
 ## M2 · Stage
