@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { centerSquare, discFade, levels, luminance } from "../../src/core/targets";
+import {
+  canonicalTarget,
+  centerSquare,
+  discFade,
+  halveTarget,
+  levels,
+  luminance,
+} from "../../src/core/targets";
 
 describe("centerSquare", () => {
   it("crops the middle of a landscape or portrait image", () => {
@@ -36,5 +43,23 @@ describe("discFade", () => {
     expect(out[(n / 2) * n + n / 2]).toBe(1);
     expect(out[0]).toBe(0);
     expect(out[n * n - 1]).toBe(0);
+  });
+});
+
+describe("canonicalTarget", () => {
+  it("rounds to 16-bit levels, clamps, and is idempotent", () => {
+    const t = Float32Array.of(-0.2, 0.123456789, 1.4);
+    const c = canonicalTarget(t);
+    expect(c[0]).toBe(0);
+    expect(c[2]).toBe(1);
+    expect(Math.round(c[1]! * 65535)).toBeCloseTo(c[1]! * 65535, 3);
+    expect(canonicalTarget(c)).toEqual(c);
+  });
+});
+
+describe("halveTarget", () => {
+  it("averages 2 × 2 blocks", () => {
+    const t = Float32Array.of(0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0);
+    expect(Array.from(halveTarget(t, 4))).toEqual([0.5, 0.25, 1, 0]);
   });
 });

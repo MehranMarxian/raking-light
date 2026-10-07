@@ -39,3 +39,25 @@ export function discFade(t: Float32Array, n: number): Float32Array {
     return v * Math.min(1, Math.max(0, (0.98 - r) / 0.1));
   });
 }
+
+/** Targets hold 16-bit levels, k / 65535, so a project saved as 16-bit PNG loads back exactly. */
+export const TARGET_LEVELS = 65535;
+
+/** A target clamped to [0, 1] and rounded to 16-bit levels. Applying it twice changes nothing. */
+export function canonicalTarget(t: Float32Array): Float32Array {
+  return t.map((v) => Math.round(Math.min(1, Math.max(0, v)) * TARGET_LEVELS) / TARGET_LEVELS);
+}
+
+/** Halves an n × n target (n even) by averaging 2 × 2 blocks, for the quick preview solve. */
+export function halveTarget(t: Float32Array, n: number): Float32Array {
+  if (n % 2 !== 0) throw new Error(`Cannot halve a target of odd size ${String(n)}`);
+  const m = n / 2;
+  const out = new Float32Array(m * m);
+  for (let y = 0; y < m; y++) {
+    for (let x = 0; x < m; x++) {
+      const i = 2 * y * n + 2 * x;
+      out[y * m + x] = (t[i]! + t[i + 1]! + t[i + n]! + t[i + n + 1]!) / 4;
+    }
+  }
+  return out;
+}
