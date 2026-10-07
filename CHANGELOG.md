@@ -4,6 +4,14 @@ Notable changes to Raking Light, one note per milestone. The format follows [Kee
 
 ## [Unreleased]
 
+### M3 · Targets and layouts (2026-10-07)
+
+- "Hide your own images": each lamp's picture can be a sample, an uploaded image (crop, levels, disc fade) or text (font, weight and size, right-to-left aware, Vazirmatn for Persian). Drop images on a card; nothing leaves the browser.
+- Layout editor for 2–4 lamps, with azimuth and elevation per lamp, a draggable layout ring, and warnings for nearly opposite lamps (within 20° of 180°), crowded lamps (under 50° apart), three or more lamps (ghosts) and lamps above 40°.
+- Every edit re-solves the draft at half resolution (48 × 48 cells, 150 steps) in the background. The ghost report shows each lamp's clarity and strongest ghost; an opposite pair shows up as a strong negative ghost, as the findings predict.
+- Projects save and load as JSON, with pictures as 16-bit PNG (new dependency: fast-png 8.0.0). Targets are kept on 16-bit levels, so a loaded project solves to the bit-identical surface (checked across a page reload). Broken files are refused with a readable reason.
+- The stage, plates, readout, sweep and method section now follow the project's lamps.
+
 ### M2 · Stage (2026-10-07)
 
 - WebGL2 stage renderer: the heights go up as an R32F texture and a fragment shader shades them with the prototype's palette. It matches the CPU renderer within 1 colour level, and the canvas renderer remains the fallback.

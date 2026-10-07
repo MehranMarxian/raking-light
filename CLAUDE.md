@@ -18,7 +18,7 @@ Owner's design philosophy: systems that withhold and reveal through use. Prefer 
 - **Solver**: pure TypeScript in `src/core/`, run in a Web Worker. WebGPU compute version comes later (M6) behind the same interface.
 - **Stage renderer**: WebGL2 fragment shader that shades the height field (height uploaded as an R32F texture, lamp as a uniform). The prototype's per-pixel canvas loop is only a reference.
 - **3D preview**: three.js (flat-shaded mesh, directional lamp).
-- **Exports**: 16-bit grayscale PNG (`fast-png`), binary STL and OBJ written by our own small writers in `src/core/export/`.
+- **Exports**: 16-bit grayscale PNG (`fast-png`), binary STL and OBJ written by our own small writers in `src/core/export/`. `fast-png` also stores the pictures inside project files.
 - **Tests**: Vitest. **Lint/format**: ESLint + Prettier.
 - **Hosting**: static site on GitHub Pages, deployed by GitHub Actions. No backend. **Nothing the user uploads ever leaves the browser** — this is a stated product promise.
 
@@ -28,16 +28,18 @@ src/
   core/                 # pure TS, no DOM, no React — fully unit-tested
     solver.ts           # loss + analytic gradient + Adam step; deterministic given a seed
     shading.ts          # Lambert shading of a facet from forward differences
-    layouts.ts          # lamp layouts (az/el per lamp, which target each lamp shows)
-    targets.ts          # image -> cell target (crop, grayscale, levels, disc fade)
+    layouts.ts          # lamp layouts (az/el per lamp, which target each lamp shows), layout warnings
+    targets.ts          # image -> cell target (crop, grayscale, levels, disc fade, 16-bit levels)
+    project.ts          # project files: JSON, pictures as 16-bit PNG, checked on load
+    report.ts           # ghost report: how clearly each lamp shows its picture
     rng.ts              # seeded PRNG (mulberry32) + gaussian
     export/png16.ts, stl.ts, obj.ts
   workers/solver.worker.ts   # wraps core/solver, streams progress (iteration, loss, height snapshot)
   render/
     stage/              # WebGL2 shading shader (+ canvas fallback), palette, lamp geometry, sweep
     medallion/          # three.js preview
-    samples.ts, plates.ts, maps.ts   # sample pictures, plate list, small canvas paintings
-  ui/                   # React components
+    samples.ts, pictures.ts, plates.ts, maps.ts   # samples, uploads and text as targets, plate list, small paintings
+  ui/                   # React components (ui/editor: the layout editor)
   state/                # Zustand store
 tests/                  # Vitest, mirrors src/core and the DOM-free parts of src/render
 reference/              # prototype.html (not bundled)

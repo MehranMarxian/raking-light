@@ -30,6 +30,8 @@ Each milestone ends with: `npm run build` passes, `npm test` passes, the app run
 - Text-to-target: type a message, pick a font (Latin + Persian via Vazirmatn), size, weight.
 - Lamp layout editor: 2–4 lamps, azimuth and elevation per lamp, warnings for opposite or crowded lamps, quick low-res preview solve (n = 48) while editing.
 - Save / load a project as a JSON file (targets as PNG data, layout, params, seed).
+- Each preview reports a ghost score per lamp: how clearly it shows its picture and how much of the others leaks in.
+**Done when** you can hide your own photo and a Persian word under lamps you placed, see the preview warn about a bad layout, solve, save, reload the page, load the file, and get a bit-identical surface.
 
 ## M4 · Export and the physical object
 - Export 16-bit displacement PNG, binary STL with a base and mm scale, OBJ.
