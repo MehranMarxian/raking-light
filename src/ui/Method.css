@@ -1,0 +1,124 @@
+.method {
+  display: grid;
+  gap: clamp(24px, 3vw, 40px);
+}
+
+@media (min-width: 900px) {
+  .method {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.step {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+}
+
+.fig {
+  display: grid;
+  align-items: center;
+  min-height: 200px;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+/* Target thumbnails */
+.targets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.targets figure {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  text-align: center;
+}
+
+.targets canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+  border-radius: 3px;
+  background: #000;
+}
+
+.targets .off {
+  opacity: 0.3;
+}
+
+/* Loss chart */
+.loss-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.loss-chart text {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  fill: var(--ink-dim);
+}
+
+.loss-chart__axis {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.loss-chart__grid {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.loss-chart__curve {
+  fill: none;
+  stroke: var(--lamp);
+  stroke-width: 1.6;
+}
+
+.loss-chart__area {
+  fill: var(--lamp-soft);
+}
+
+.loss-chart__dot {
+  fill: var(--lamp);
+}
+
+.loss-chart .loss-chart__value {
+  fill: var(--lamp);
+}
+
+/* Height map */
+.height-map {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+}
+
+/* Facts */
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 0.93rem;
+}
+
+.facts dt {
+  padding-top: 2px;
+  font-family: var(--f-mono);
+  font-size: var(--step--1);
+  color: var(--ink-dim);
+}
+
+.facts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

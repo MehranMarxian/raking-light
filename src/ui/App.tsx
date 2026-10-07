@@ -1,4 +1,6 @@
 import { Controls } from "./Controls";
+import { Method } from "./Method";
+import { Plates } from "./Plates";
 import { Stage } from "./Stage";
 import { useSampleSolve } from "./useSampleSolve";
 import { useSweep } from "./useSweep";
@@ -28,6 +30,8 @@ export function App() {
           </div>
           <Stage />
         </section>
+        <Plates />
+        <Method />
       </main>
 
       <footer className="foot">
