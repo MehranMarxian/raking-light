@@ -34,11 +34,12 @@ src/
     export/png16.ts, stl.ts, obj.ts
   workers/solver.worker.ts   # wraps core/solver, streams progress (iteration, loss, height snapshot)
   render/
-    stage/              # WebGL2 shading shader + lamp ring interaction
+    stage/              # WebGL2 shading shader (+ canvas fallback), palette, lamp geometry, sweep
     medallion/          # three.js preview
+    samples.ts, plates.ts, maps.ts   # sample pictures, plate list, small canvas paintings
   ui/                   # React components
   state/                # Zustand store
-tests/                  # Vitest, mirrors src/core
+tests/                  # Vitest, mirrors src/core and the DOM-free parts of src/render
 reference/              # prototype.html (not bundled)
 ```
 Rules:

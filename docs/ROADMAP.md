@@ -22,6 +22,7 @@ Each milestone ends with: `npm run build` passes, `npm test` passes, the app run
 - WebGL2 shading shader for the height field; lamp ring with drag, keyboard control, lamp-height slider, flat-light button, auto-sweep that dwells on each lamp.
 - Live update while solving; loss chart; documentation plates (overhead + one per lamp).
 - Two / three picture modes with the sample targets.
+- The method section as in the prototype: target thumbnails, loss chart and height map (the owner approved the thumbnails and height map on 2026-10-07).
 **Done when** it matches the prototype's look and runs at 60 fps while dragging on a laptop.
 
 ## M3 · Targets and layouts

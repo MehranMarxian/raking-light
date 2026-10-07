@@ -69,7 +69,7 @@ g[y+1] += d·∂s/∂hy      g[y] −= d·∂s/∂hy
 
 Adam, `lr = 0.05`, `β1 = 0.9`, `β2 = 0.999`, `ε = 1e−12`, 300 iterations. Initialize `h ~ N(0, 0.6)` from a seeded PRNG (mulberry32, seed 7 in the prototype) so results are reproducible. Stream a height snapshot to the UI every 5 iterations so the user watches the pictures emerge.
 
-Cost per iteration: two passes over `F²` facets per lamp (forward, then gradient). 384², 2 lamps + flat: about 15–25 ms in JS. Measured for the port on the owner's desktop: about 12 ms, so the 2-lamp sample solves in 3.5–3.6 s in the production build. In the same browser the prototype takes 3.6–6.3 s.
+Cost per iteration: two passes over `F²` facets per lamp (forward, then gradient). 384², 2 lamps + flat: about 15–25 ms in JS. Measured for the port on the owner's desktop: about 12 ms, so the 2-lamp sample solves in 3.5–3.9 s in the production build. In the same browser the prototype takes 3.6–6.3 s. The 3-lamp sample takes 4.6–4.9 s, against 7.5 s for the prototype.
 
 ## 5. Tuned defaults
 
